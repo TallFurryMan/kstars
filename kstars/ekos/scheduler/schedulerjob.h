@@ -96,6 +96,12 @@ class SchedulerJob
     CompletionCondition getCompletionCondition() const;
     void setCompletionCondition(const CompletionCondition &value);
 
+    int getSequenceCount() const;
+    void setSequenceCount(const int count);
+
+    int getCompletedCount() const;
+    void setCompletedCount(const int count);
+
     StepPipeline getStepPipeline() const;
     void setStepPipeline(const StepPipeline &value);
 
@@ -136,6 +142,9 @@ class SchedulerJob
     QTableWidgetItem *getEstimatedTimeCell() const;
     void setEstimatedTimeCell(QTableWidgetItem *value);
 
+    QTableWidgetItem *getCaptureCountCell() const;
+    void setCaptureCountCell(QTableWidgetItem *value);
+
     bool getLightFramesRequired() const;
     void setLightFramesRequired(bool value);
 
@@ -158,6 +167,9 @@ private:
     StartupCondition startupCondition { START_ASAP };
     CompletionCondition completionCondition { FINISH_SEQUENCE };
 
+    int sequenceCount { 0 };
+    int completedCount { 0 };
+
     QDateTime startupTime;
     QDateTime completionTime;
 
@@ -175,6 +187,9 @@ private:
     QTableWidgetItem *statusCell { nullptr };
     QTableWidgetItem *startupCell { nullptr };
     QTableWidgetItem *estimatedTimeCell { nullptr };
+    QTableWidgetItem *captureCountCell { nullptr };
+
+    void updateJobCell();
 
     int score { 0 };
     int16_t culminationOffset { 0 };

@@ -54,9 +54,9 @@ void SchedulerJob::setStartupTime(const QDateTime &value)
 {
     startupTime = value;
 
-    if (startupCell)
-        startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+    updateJobCell();
 }
+
 QUrl SchedulerJob::getSequenceFile() const
 {
     return sequenceFile;
@@ -206,6 +206,30 @@ void SchedulerJob::setCulminationOffset(const int16_t &value)
     culminationOffset = value;
 }
 
+int SchedulerJob::getSequenceCount() const
+{
+    return sequenceCount;
+}
+
+void SchedulerJob::setSequenceCount(const int count)
+{
+    sequenceCount = count;
+
+    updateJobCell();
+}
+
+int SchedulerJob::getCompletedCount() const
+{
+    return completedCount;
+}
+
+void SchedulerJob::setCompletedCount(const int count)
+{
+    completedCount = count;
+
+    updateJobCell();
+}
+
 QTableWidgetItem *SchedulerJob::getStartupCell() const
 {
     return startupCell;
@@ -215,6 +239,17 @@ void SchedulerJob::setStartupCell(QTableWidgetItem *value)
 {
     startupCell = value;
 }
+
+QTableWidgetItem *SchedulerJob::getCaptureCountCell() const
+{
+    return captureCountCell;
+}
+
+void SchedulerJob::setCaptureCountCell(QTableWidgetItem *value)
+{
+    captureCountCell = value;
+}
+
 void SchedulerJob::setDateTimeDisplayFormat(const QString &value)
 {
     dateTimeDisplayFormat = value;
@@ -300,11 +335,29 @@ void SchedulerJob::setEstimatedTime(const int64_t &value)
 {
     estimatedTime = value;
 
+    updateJobCell();
+}
+
+/* FIXME: unrelated to model, move this in the view */
+void SchedulerJob::updateJobCell()
+{
+    /* Status Cell is managed by SetStage */
+
+    if (captureCountCell)
+    {
+        captureCountCell->setText(QString::asprintf("%d/%d",completedCount,sequenceCount));
+    }
+
+    if (startupCell)
+    {
+        startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+    }
+
     if (estimatedTimeCell)
     {
         // Seconds to ms
-        QTime estimatedTime = QTime::fromMSecsSinceStartOfDay(value * 1000);
-        estimatedTimeCell->setText(estimatedTime.toString("HH:mm:ss"));
+        QTime estimatedTimeString = QTime::fromMSecsSinceStartOfDay(estimatedTime * 1000);
+        estimatedTimeCell->setText(estimatedTimeString.toString("HH:mm:ss"));
     }
 }
 

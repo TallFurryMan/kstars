@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>660</width>
-    <height>489</height>
+    <width>817</width>
+    <height>590</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -620,6 +620,11 @@
           <column>
            <property name="text">
             <string>End Time</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Captures</string>
            </property>
           </column>
           <column>
@@ -1539,7 +1544,6 @@
   <tabstop>selectFITSB</tabstop>
   <tabstop>sequenceEdit</tabstop>
   <tabstop>loadSequenceB</tabstop>
-  <tabstop>profileCombo</tabstop>
   <tabstop>trackStepCheck</tabstop>
   <tabstop>focusStepCheck</tabstop>
   <tabstop>alignStepCheck</tabstop>
@@ -1586,7 +1590,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="startupProcedureButtonGroup">
+  <buttongroup name="stepsButtonGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
@@ -1596,17 +1600,17 @@
     <bool>false</bool>
    </property>
   </buttongroup>
-  <buttongroup name="stepsButtonGroup">
-   <property name="exclusive">
-    <bool>false</bool>
-   </property>
-  </buttongroup>
-  <buttongroup name="startupButtonGroup"/>
   <buttongroup name="constraintButtonGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
+  <buttongroup name="startupProcedureButtonGroup">
+   <property name="exclusive">
+    <bool>false</bool>
+   </property>
+  </buttongroup>
+  <buttongroup name="startupButtonGroup"/>
   <buttongroup name="completionButtonGroup"/>
  </buttongroups>
 </ui>

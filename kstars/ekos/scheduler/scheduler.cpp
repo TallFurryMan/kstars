@@ -546,8 +546,15 @@ void Scheduler::saveJob()
     completionCell->setTextAlignment(Qt::AlignHCenter);
     completionCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-    QTableWidgetItem *estimatedTimeCell =
+    QTableWidgetItem *captureCount =
         (jobUnderEdit >= 0) ? queueTable->item(currentRow, 4) : new QTableWidgetItem();
+    captureCount->setTextAlignment(Qt::AlignHCenter);
+    captureCount->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    captureCount->setText(QString::asprintf("%d/%d", job->getCompletedCount(), job->getSequenceCount()));
+    job->setCaptureCountCell(captureCount);
+
+    QTableWidgetItem *estimatedTimeCell =
+        (jobUnderEdit >= 0) ? queueTable->item(currentRow, 5) : new QTableWidgetItem();
     if (job->getEstimatedTime() > 0)
     {
         QTime estimatedTime = QTime::fromMSecsSinceStartOfDay(job->getEstimatedTime() * 3600);
@@ -565,7 +572,8 @@ void Scheduler::saveJob()
         queueTable->setItem(currentRow, 1, statusCell);
         queueTable->setItem(currentRow, 2, startupCell);
         queueTable->setItem(currentRow, 3, completionCell);
-        queueTable->setItem(currentRow, 4, estimatedTimeCell);
+        queueTable->setItem(currentRow, 4, captureCount);
+        queueTable->setItem(currentRow, 5, estimatedTimeCell);
     }
 
     if (queueTable->rowCount() > 0)
@@ -1066,7 +1074,8 @@ void Scheduler::evaluateJobs()
         // -1 = Job is not estimated yet
         // -2 = Job is estimated but time is unknown
         // > 0  Job is estimated and time is known
-        if (job->getEstimatedTime() == -1)
+        // Do this unconditionally - we need all jobs properly updated anytime
+        //if (job->getEstimatedTime() == -1)
         {
             if (estimateJobTime(job) == false)
             {
@@ -4052,6 +4061,8 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
     bool rememberJobProgress = Options::rememberJobProgress();
     foreach (SequenceJob *job, jobs)
     {
+        QString seqName = i18n("Sequence %1x%2\"", job->getCount(), job->getExposure());
+
         if (job->getUploadMode() == ISD::CCD::UPLOAD_LOCAL)
         {
             appendLogText(i18n("Cannot estimate time since the sequence saves the files remotely."));
@@ -4074,50 +4085,97 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         int completed = 0;
         if (rememberJobProgress)
         {
+            // Retrieve cached count of completed captures for the output folder of this job
             QString signature = job->getLocalDir() + job->getDirectoryPostfix();
             completed = capturedFramesCount[signature];
+            appendLogText(i18n("%1 matches %2 captures in output folder '%3'.", seqName, completed, signature));
+
+            // If we have multiple jobs storing their captures in the same output folder (duplicated jobs), we need to recalculate
+            // the completion count for the current scheduler job using sequence jobs which had the same signature earlier in the list
+            // This DOES NOT handle the case of duplicated Scheduler jobs having the same output folder
+            int const overallCompleted = completed;
+            foreach (SequenceJob *prevJob, jobs)
+            {
+                // Enumerate jobs up to the current one
+                if (job == prevJob)
+                    break;
+
+                // If the previous job signature matches the current, reduce completion count to compare duplicates
+                if (!signature.compare(prevJob->getLocalDir() + prevJob->getDirectoryPostfix()))
+                {
+                    appendLogText(i18n("- A previous duplicate had %1 completed captures.", prevJob->getCount()));
+                    completed -= prevJob->getCount();
+                }
+            }
+
+            // Update the completion count for this signature if we still have captures to take
+            // FIXME: this doesn't seem to play well with duplicates
             if (completed < job->getCount())
             {
                 QMap<QString, uint16_t> fMap = schedJob->getCapturedFramesMap();
-                fMap[signature] = completed;
+                fMap[signature] = overallCompleted;
                 schedJob->setCapturedFramesMap(fMap);
             }
+
+            // From now on, 'completed' is the number of frames completed for the *current* sequence job
         }
+
 
         // Check if we still need any light frames. Because light frames changes the flow of the observatory startup
         // Without light frames, there is no need to do focusing, alignment, guiding...etc
         // We check if the frame type is LIGHT and if either the number of completed frames is less than required
         // OR if the completion condition is set to LOOP so it is never complete due to looping.
-        if (job->getFrameType() == FRAME_LIGHT &&
-            (completed < job->getCount() || schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP))
+        bool const areJobCapturesComplete = !(completed < job->getCount() || schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP);
+        if (job->getFrameType() == FRAME_LIGHT)
         {
-            lightFramesRequired = true;
+            if(areJobCapturesComplete)
+            {
+                appendLogText(i18n("%1 completed its sequence of %2 light frames.", seqName, job->getCount()));
+            }
+            else
+            {
+                lightFramesRequired = true;
 
-            // In some cases we do not need to calculate time we just need to know
-            // if light frames are required or not. So we break out
-            if (schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP ||
-                (schedJob->getStartupCondition() == SchedulerJob::START_AT &&
-                 schedJob->getCompletionCondition() == SchedulerJob::FINISH_AT))
-                break;
+                // In some cases we do not need to calculate time we just need to know
+                // if light frames are required or not. So we break out
+                /*
+                if (schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP ||
+                    (schedJob->getStartupCondition() == SchedulerJob::START_AT &&
+                     schedJob->getCompletionCondition() == SchedulerJob::FINISH_AT))
+                    break;
+                */
+            }
+        }
+        else
+        {
+            appendLogText(i18n("%1 is a sequence of calibration frames.", seqName));
         }
 
         totalSequenceCount += job->getCount();
         totalCompletedCount += rememberJobProgress ? completed : 0;
         totalImagingTime += fabs((job->getExposure() + job->getDelay()) * (job->getCount() - completed));
 
-        if (completed < job->getCount() && job->getFrameType() == FRAME_LIGHT)
+        if (!areJobCapturesComplete && job->getFrameType() == FRAME_LIGHT)
         {
             // If inSequenceFocus is true
             if (hasAutoFocus)
+            {
                 // Wild guess that each in sequence auto focus takes an average of 30 seconds. It can take any where from 2 seconds to 2+ minutes.
+                appendLogText(i18n("%1 requires a focus procedure.", seqName));
                 totalImagingTime += (job->getCount() - completed) * 30;
+            }
             // If we're dithering after each exposure, that's another 10-20 seconds
             if (schedJob->getStepPipeline() & SchedulerJob::USE_GUIDE && Options::ditherEnabled())
+            {
+                appendLogText(i18n("%1 requires a dither procedure.", seqName));
                 totalImagingTime += ((job->getCount() - completed) * 15) / Options::ditherFrames();
+            }
         }
     }
 
     schedJob->setLightFramesRequired(lightFramesRequired);
+    schedJob->setSequenceCount(totalSequenceCount);
+    schedJob->setCompletedCount(totalCompletedCount);
 
     qDeleteAll(jobs);
 
