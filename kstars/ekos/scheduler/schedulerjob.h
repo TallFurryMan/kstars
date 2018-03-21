@@ -157,6 +157,27 @@ class SchedulerJob
     QMap<QString, uint16_t> getCapturedFramesMap() const;
     void setCapturedFramesMap(const QMap<QString, uint16_t> &value);
 
+    /** @brief Compare ::SchedulerJob instances based on score.
+     * @arg a, b are ::SchedulerJob instances to compare.
+     * @return true if the score of a is lower than the score of b.
+     * @return false if the score of a is higher than or equal to the score of b.
+     */
+    static bool ascendingScore(SchedulerJob const *a, SchedulerJob const *b);
+
+    /** @brief Compare ::SchedulerJob instances based on priority.
+     * @arg a, b are ::SchedulerJob instances to compare.
+     * @return true if the priority of b is lower than the priority of a.
+     * @return false if the priority of b is higher than or equal to the priority of a.
+     */
+    static bool descendingPriority(SchedulerJob const *a, SchedulerJob const *b);
+
+    /** @brief Compare ::SchedulerJob instances based on altitude.
+     * @arg a, b are ::SchedulerJob instances to compare.
+     * @return true if the altitude of b is lower than the altitude of a.
+     * @return false if the altitude of b is higher than or equal to the altitude of a.
+     */
+    static bool descendingAltitude(SchedulerJob const *a, SchedulerJob const *b);
+
 private:
     QString name;
     SkyPoint targetCoords;

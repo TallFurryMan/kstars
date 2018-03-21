@@ -42,24 +42,6 @@
 
 namespace Ekos
 {
-bool scoreHigherThan(SchedulerJob *job1, SchedulerJob *job2)
-{
-    return job1->getScore() > job2->getScore();
-}
-
-bool priorityHigherThan(SchedulerJob *job1, SchedulerJob *job2)
-{
-    return job1->getPriority() < job2->getPriority();
-}
-
-bool altitudeHigherThan(SchedulerJob *job1, SchedulerJob *job2)
-{
-    double job1_altitude = Scheduler::findAltitude(job1->getTargetCoords(), job1->getStartupTime());
-    double job2_altitude = Scheduler::findAltitude(job2->getTargetCoords(), job2->getStartupTime());
-
-    return job1_altitude > job2_altitude;
-}
-
 Scheduler::Scheduler()
 {
     setupUi(this);
@@ -1322,9 +1304,9 @@ void Scheduler::evaluateJobs()
     if (Options::sortSchedulerJobs())
     {
         // Order by altitude first
-        qSort(sortedJobs.begin(), sortedJobs.end(), altitudeHigherThan);
+        qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingAltitude);
         // Then by priority
-        qSort(sortedJobs.begin(), sortedJobs.end(), priorityHigherThan);
+        qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingPriority);
     }
 
     // Our first job now takes priority over ALL others.
@@ -1417,9 +1399,9 @@ void Scheduler::evaluateJobs()
     if (Options::sortSchedulerJobs())
     {
         // Order by score first
-        qSort(sortedJobs.begin(), sortedJobs.end(), scoreHigherThan);
+        qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::ascendingScore);
         // Then by priority
-        qSort(sortedJobs.begin(), sortedJobs.end(), priorityHigherThan);
+        qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingPriority);
 
         foreach (SchedulerJob *job, sortedJobs)
         {
