@@ -3656,6 +3656,14 @@ void Scheduler::startSlew()
 {
     Q_ASSERT(currentJob != nullptr);
 
+    if (isMountParked())
+    {
+        appendLogText(i18n("Warning! Job '%1' found mount parked unexpectedly, attempting to unpark.", currentJob->getName()));
+        startupState = STARTUP_UNPARK_MOUNT;
+        unParkMount();
+        return;
+    }
+
     if (Options::resetMountModelBeforeJob())
         mountInterface->call(QDBus::AutoDetect, "resetModel");
 
