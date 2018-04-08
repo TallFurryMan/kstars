@@ -8,6 +8,7 @@
  */
 
 #include "schedulerjob.h"
+#include "scheduler.h"
 
 #include "dms.h"
 #include "kstarsdata.h"
@@ -30,7 +31,7 @@ void SchedulerJob::setName(const QString &value)
     name = value;
 }
 
-SkyPoint &SchedulerJob::getTargetCoords()
+SkyPoint const & SchedulerJob::getTargetCoords() const
 {
     return targetCoords;
 }
@@ -449,18 +450,18 @@ void SchedulerJob::setTargetCoords(dms& ra, dms& dec)
     targetCoords.updateCoordsNow(KStarsData::Instance()->updateNum());
 }
 
-static bool SchedulerJob::ascendingScore(SchedulerJob const *job1, SchedulerJob const *job2)
+bool SchedulerJob::ascendingScore(SchedulerJob const *job1, SchedulerJob const *job2)
 {
     return job1->getScore() < job2->getScore();
 }
 
-static bool SchedulerJob::descendingPriority(SchedulerJob const *job1, SchedulerJob const *job2)
+bool SchedulerJob::descendingPriority(SchedulerJob const *job1, SchedulerJob const *job2)
 {
     return job1->getPriority() > job2->getPriority();
 }
 
-static bool SchedulerJob::descendingAltitude(SchedulerJob const *job1, SchedulerJob const *job2)
+bool SchedulerJob::descendingAltitude(SchedulerJob const *job1, SchedulerJob const *job2)
 {
-    return  Scheduler::findAltitude(job1->getTargetCoords(), job1->getStartupTime()) >
-            Scheduler::findAltitude(job2->getTargetCoords(), job2->getStartupTime());
+    return  Ekos::Scheduler::findAltitude(job1->getTargetCoords(), job1->getStartupTime()) >
+            Ekos::Scheduler::findAltitude(job2->getTargetCoords(), job2->getStartupTime());
 }

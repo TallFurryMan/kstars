@@ -66,8 +66,8 @@ class SchedulerJob
     QString getName() const;
     void setName(const QString &value);
 
+    SkyPoint const & getTargetCoords() const;
     void setTargetCoords(dms& ra, dms& dec);
-    SkyPoint &getTargetCoords();
 
     StartupCondition getStartupCondition() const;
     void setStartupCondition(const StartupCondition &value);

@@ -1310,9 +1310,9 @@ void Scheduler::evaluateJobs()
 
     if (Options::sortSchedulerJobs())
     {
-        // Order by altitude first
+        // Order by altitude, greater altitude first
         qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingAltitude);
-        // Then by priority
+        // Then by priority, greater priority first
         qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingPriority);
     }
 
@@ -1405,9 +1405,9 @@ void Scheduler::evaluateJobs()
 #if 0
     if (Options::sortSchedulerJobs())
     {
-        // Order by score first
+        // Order by score, lower score first
         qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::ascendingScore);
-        // Then by priority
+        // Then by priority, greater priority first
         qSort(sortedJobs.begin(), sortedJobs.end(), SchedulerJob::descendingPriority);
 
         foreach (SchedulerJob *job, sortedJobs)
