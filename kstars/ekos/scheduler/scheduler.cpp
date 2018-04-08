@@ -1369,7 +1369,8 @@ void Scheduler::evaluateJobs()
             // If other jobs starts after pre-dawn limit, then we schedule it to the next day.
             // But we only take this action IF the job we are checking against starts _before_ dawn and our
             // job therefore carry us after down, then there is an actual need to schedule it next day.
-            if (lastStartTime <  nextPreDawnTime &&  otherjob_time >= nextPreDawnTime)
+            // FIXME: After changing time we are not evaluating job again when we should.
+            if (job->getEnforceTwilight() && lastStartTime < nextPreDawnTime && otherjob_time >= nextPreDawnTime)
             {
                 QDateTime date;
 
@@ -1661,7 +1662,8 @@ bool Scheduler::calculateAltitudeTime(SchedulerJob *job, double minAltitude, dou
 
         rawFrac = (hour > 24 ? (hour - 24) : hour) / 24.0;
 
-        if (rawFrac < Dawn || rawFrac > Dusk)
+        /* Test twilight enforcement, and if enforced, bail out if start time is during day */
+        if (!job->getEnforceTwilight() || rawFrac < Dawn || rawFrac > Dusk)
         {
             CachingDms LST = geo->GSTtoLST(myUT.gst());
             target.EquatorialToHorizontal(&LST, geo->lat());
@@ -1671,7 +1673,8 @@ bool Scheduler::calculateAltitudeTime(SchedulerJob *job, double minAltitude, dou
             {
                 QDateTime startTime = geo->UTtoLT(myUT);
 
-                if (rawFrac > earlyDawn && rawFrac < Dawn)
+                /* Test twilight enforcement, and if enforced, bail out if start time is too close to dawn */
+                if (job->getEnforceTwilight() && rawFrac > earlyDawn && rawFrac < Dawn)
                 {
                     appendLogText(i18n("Job '%1' reaches an altitude of %2 degrees at %3 but will not be scheduled due to "
                                        "close proximity to astronomical twilight rise.",
