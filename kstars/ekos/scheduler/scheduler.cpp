@@ -4129,12 +4129,13 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
     bool rememberJobProgress = Options::rememberJobProgress();
     foreach (SequenceJob *job, jobs)
     {
-        QString seqName = i18n("Sequence %1x%2\"", job->getCount(), job->getExposure());
+        QString seqName = i18n("Job '%1' %2x%3\" %4", schedJob->getName(), job->getCount(), job->getExposure(), job->getFilterName());
 
         if (job->getUploadMode() == ISD::CCD::UPLOAD_LOCAL)
         {
-            appendLogText(i18n("Cannot estimate time since the sequence saves the files remotely."));
+            appendLogText(i18n("%1 duration cannot be estimated time since the sequence saves the files remotely.", seqName));
             schedJob->setEstimatedTime(-2);
+
             // Iterate over all jobs, if just one requires FRAME_LIGHT then we set it as is and return
             foreach (SequenceJob *oneJob, jobs)
             {
@@ -4171,7 +4172,7 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
                 // If the previous job signature matches the current, reduce completion count to compare duplicates
                 if (!signature.compare(prevJob->getLocalDir() + prevJob->getDirectoryPostfix()))
                 {
-                    appendLogText(i18n("- A previous duplicate had %1 completed captures.", prevJob->getCount()));
+                    appendLogText(i18n("%1 has a previous duplicate with %2 completed captures.", seqName, prevJob->getCount()));
                     completed -= prevJob->getCount();
                 }
             }
@@ -4193,7 +4194,7 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         // Without light frames, there is no need to do focusing, alignment, guiding...etc
         // We check if the frame type is LIGHT and if either the number of completed frames is less than required
         // OR if the completion condition is set to LOOP so it is never complete due to looping.
-        bool const areJobCapturesComplete = !(completed < job->getCount() || schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP);
+        bool const areJobCapturesComplete = !(completed < job->getCount()*schedJob->getRepeatsRequired() || schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP);
         if (job->getFrameType() == FRAME_LIGHT)
         {
             if(areJobCapturesComplete)
@@ -4216,10 +4217,10 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         }
         else
         {
-            appendLogText(i18n("%1 is a sequence of calibration frames.", seqName));
+            appendLogText(i18n("%1 captures calibration frames.", seqName));
         }
 
-        totalSequenceCount += job->getCount();
+        totalSequenceCount += job->getCount()*schedJob->getRepeatsRequired();
         totalCompletedCount += rememberJobProgress ? completed : 0;
         totalImagingTime += fabs((job->getExposure() + job->getDelay()) * (job->getCount() - completed));
 
@@ -4230,13 +4231,13 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
             {
                 // Wild guess that each in sequence auto focus takes an average of 30 seconds. It can take any where from 2 seconds to 2+ minutes.
                 appendLogText(i18n("%1 requires a focus procedure.", seqName));
-                totalImagingTime += (job->getCount() - completed) * 30;
+                totalImagingTime += (job->getCount()*schedJob->getRepeatsRequired() - completed) * 30;
             }
             // If we're dithering after each exposure, that's another 10-20 seconds
             if (schedJob->getStepPipeline() & SchedulerJob::USE_GUIDE && Options::ditherEnabled())
             {
                 appendLogText(i18n("%1 requires a dither procedure.", seqName));
-                totalImagingTime += ((job->getCount() - completed) * 15) / Options::ditherFrames();
+                totalImagingTime += ((job->getCount()*schedJob->getRepeatsRequired() - completed) * 15) / Options::ditherFrames();
             }
         }
     }
@@ -4251,49 +4252,48 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
     if (schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP)
     {
         // We can't know estimated time if it is looping indefinitely
+        appendLogText(i18n("Warning! Job '%1' will be looping until Scheduler is stopped manually.", schedJob->getName()));
         schedJob->setEstimatedTime(-2);
-        return true;
     }
-
     // If we know startup and finish times, we can estimate time right away
-    if (schedJob->getStartupCondition() == SchedulerJob::START_AT &&
+    else if (schedJob->getStartupCondition() == SchedulerJob::START_AT &&
         schedJob->getCompletionCondition() == SchedulerJob::FINISH_AT)
     {
-        qint64 diff = schedJob->getStartupTime().secsTo(schedJob->getCompletionTime());
+        qint64 const diff = schedJob->getStartupTime().secsTo(schedJob->getCompletionTime());
+        appendLogText(i18n("Job '%1' will run for %2.", schedJob->getName(), dms(diff / 3600.0f).toHMSString()));
         schedJob->setEstimatedTime(diff);
-        return true;
     }
-
-    if (totalCompletedCount > 0 && totalCompletedCount >= totalSequenceCount)
+    else if (totalCompletedCount > 0 && totalCompletedCount >= totalSequenceCount)
     {
-        appendLogText(i18n("%1 observation job is already complete.", schedJob->getName()));
+        appendLogText(i18n("Job '%1' will not run, complete with %2/%3 captures.", schedJob->getName(), totalCompletedCount, totalSequenceCount));
         schedJob->setEstimatedTime(0);
-        return true;
     }
-
-    if (lightFramesRequired)
+    else
     {
-        // Are we doing tracking? It takes about 30 seconds
-        if (schedJob->getStepPipeline() & SchedulerJob::USE_TRACK)
-            totalImagingTime += 30;
-        // Are we doing initial focusing? That can take about 2 minutes
-        if (schedJob->getStepPipeline() & SchedulerJob::USE_FOCUS)
-            totalImagingTime += 120;
-        // Are we doing astrometry? That can take about 30 seconds
-        if (schedJob->getStepPipeline() & SchedulerJob::USE_ALIGN)
-            totalImagingTime += 30;
-        // Are we doing guiding? Calibration process can take about 2 mins
-        if (schedJob->getStepPipeline() & SchedulerJob::USE_GUIDE)
-            totalImagingTime += 120;
+        if (lightFramesRequired)
+        {
+            // Are we doing tracking? It takes about 30 seconds
+            if (schedJob->getStepPipeline() & SchedulerJob::USE_TRACK)
+                totalImagingTime += 30*schedJob->getRepeatsRequired();
+            // Are we doing initial focusing? That can take about 2 minutes
+            if (schedJob->getStepPipeline() & SchedulerJob::USE_FOCUS)
+                totalImagingTime += 120*schedJob->getRepeatsRequired();
+            // Are we doing astrometry? That can take about 30 seconds
+            if (schedJob->getStepPipeline() & SchedulerJob::USE_ALIGN)
+                totalImagingTime += 30*schedJob->getRepeatsRequired();
+            // Are we doing guiding? Calibration process can take about 2 mins
+            if (schedJob->getStepPipeline() & SchedulerJob::USE_GUIDE)
+                totalImagingTime += 120*schedJob->getRepeatsRequired();
+        }
+
+        dms estimatedTime;
+        estimatedTime.setH(totalImagingTime / 3600.0);
+        /* Kept the informative log because the estimation is displayed */
+        appendLogText(i18n("Job '%1' estimated to take %2 to complete.", schedJob->getName(),
+                           estimatedTime.toHMSString()));
+
+        schedJob->setEstimatedTime(totalImagingTime);
     }
-
-    totalImagingTime *= (schedJob->getRepeatsRequired() + 1);
-
-    dms estimatedTime;
-    estimatedTime.setH(totalImagingTime / 3600.0);
-    qCInfo(KSTARS_EKOS_SCHEDULER) << schedJob->getName() << "observation job is estimated to take" << estimatedTime.toHMSString();
-
-    schedJob->setEstimatedTime(totalImagingTime);
 
     return true;
 }
