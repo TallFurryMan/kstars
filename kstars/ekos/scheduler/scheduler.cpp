@@ -373,6 +373,13 @@ void Scheduler::saveJob()
 
     watchJobChanges(false);
 
+    /* Warn if appending a job after infinite repeat */
+    /* FIXME: alter looping job priorities so that they are rescheduled later */
+    foreach(SchedulerJob * job, jobs)
+        if(SchedulerJob::FINISH_LOOP == job->getCompletionCondition())
+            appendLogText(i18n("Warning! Job '%1' has completion condition set to infinite repeat, other jobs may not execute.",job->getName()));
+
+
     if (nameEdit->text().isEmpty())
     {
         appendLogText(i18n("Target name is required."));
