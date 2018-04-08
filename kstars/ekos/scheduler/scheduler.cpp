@@ -623,6 +623,8 @@ void Scheduler::resetJobState(QModelIndex i)
     if (job->getCompletionCondition() != SchedulerJob::FINISH_AT)
         queueTable->item(i.row(), (int)SCHEDCOL_ENDTIME)->setText(QString());
 
+    queueTable->resizeColumnsToContents();
+
     appendLogText(i18n("Job '%1' status is reset.", job->getName()));
 }
 
@@ -795,6 +797,7 @@ void Scheduler::removeJob()
     }
 
     queueTable->removeRow(currentRow);
+    queueTable->resizeColumnsToContents();
 
     SchedulerJob *job = jobs.at(currentRow);
     jobs.removeOne(job);
@@ -1313,6 +1316,7 @@ void Scheduler::evaluateJobs()
         else
             stop();
 
+        queueTable->resizeColumnsToContents();
         return;
     }
 
@@ -1395,6 +1399,7 @@ void Scheduler::evaluateJobs()
     {
         appendLogText(i18n("Job evaluation complete."));
         jobEvaluationOnly = false;
+        queueTable->resizeColumnsToContents();
         return;
     }
 
@@ -1588,6 +1593,8 @@ void Scheduler::evaluateJobs()
             }
         }
     }
+
+    queueTable->resizeColumnsToContents();
 }
 
 void Scheduler::wakeUpScheduler()
@@ -3239,7 +3246,8 @@ void Scheduler::load()
 
     dirPath = QUrl(fileURL.url(QUrl::RemoveFilename));
 
-    loadScheduler(fileURL.toLocalFile());
+    if (loadScheduler(fileURL.toLocalFile()))
+        queueTable->resizeColumnsToContents();
 }
 
 bool Scheduler::loadScheduler(const QString &fileURL)
@@ -3261,6 +3269,7 @@ bool Scheduler::loadScheduler(const QString &fileURL)
     jobs.clear();
     while (queueTable->rowCount() > 0)
         queueTable->removeRow(0);
+    queueTable->resizeColumnsToContents();
 
     LilXML *xmlParser = newLilXML();
     char errmsg[MAXRBUF];
