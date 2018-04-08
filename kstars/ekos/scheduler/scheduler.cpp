@@ -3676,7 +3676,13 @@ void Scheduler::startSlew()
 
     appendLogText(i18n("Job '%1' is slewing to target.", currentJob->getName()));
 
-    mountInterface->callWithArgumentList(QDBus::AutoDetect, "slew", telescopeSlew);
+    QDBusReply<bool> const slewModeReply = mountInterface->callWithArgumentList(QDBus::AutoDetect, "slew", telescopeSlew);
+    if (slewModeReply.error().type() != QDBusError::NoError)
+    {
+        /* FIXME: manage error */
+        appendLogText(i18n("Warning! Job '%1' slew request received DBUS error: %2", currentJob->getName(), QDBusError::errorString(slewModeReply.error().type())));
+        return;
+    }
 
     currentJob->setStage(SchedulerJob::STAGE_SLEWING);
 }
@@ -4291,8 +4297,14 @@ void Scheduler::parkMount()
 
 void Scheduler::unParkMount()
 {
-    QDBusReply<int> MountReply  = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
-    Mount::ParkingStatus status = (Mount::ParkingStatus)MountReply.value();
+    QDBusReply<int> const mountReply = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    Mount::ParkingStatus status = (Mount::ParkingStatus)mountReply.value();
+
+    if (mountReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Mount getParkingStatus request received DBUS error: %2", QDBusError::errorString(mountReply.error().type())));
+        status = Mount::PARKING_ERROR;
+    }
 
     if (status != Mount::UNPARKING_OK)
     {
@@ -4325,11 +4337,14 @@ void Scheduler::unParkMount()
 void Scheduler::checkMountParkingStatus()
 {
     static int parkingFailureCount = 0;
-    QDBusReply<int> mountReply     = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
-    Mount::ParkingStatus status    = (Mount::ParkingStatus)mountReply.value();
+    QDBusReply<int> const mountReply = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    Mount::ParkingStatus status = (Mount::ParkingStatus)mountReply.value();
 
-    if (mountReply.error().type() == QDBusError::UnknownObject)
+    if (mountReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Mount getParkingStatus request received DBUS error: %2", QDBusError::errorString(mountReply.error().type())));
         status = Mount::PARKING_ERROR;
+    }
 
     switch (status)
     {
@@ -4399,22 +4414,28 @@ void Scheduler::checkMountParkingStatus()
 
 bool Scheduler::isMountParked()
 {
-    QDBusReply<int> mountReply  = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const mountReply  = mountInterface->call(QDBus::AutoDetect, "getParkingStatus");
     Mount::ParkingStatus status = (Mount::ParkingStatus)mountReply.value();
 
-    if (mountReply.error().type() == QDBusError::UnknownObject)
-        return false;
+    if (mountReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Mount getParkingStatus request received DBUS error: %2", QDBusError::errorString(mountReply.error().type())));
+        status = Mount::PARKING_ERROR;
+    }
 
-    if (status == Mount::PARKING_OK || status == Mount::PARKING_IDLE)
-        return true;
-    else
-        return false;
+    return status == Mount::PARKING_OK || status == Mount::PARKING_IDLE;
 }
 
 void Scheduler::parkDome()
 {
-    QDBusReply<int> domeReply  = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const domeReply = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
     Dome::ParkingStatus status = (Dome::ParkingStatus)domeReply.value();
+
+    if (domeReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Dome getParkingStatus request received DBUS error: %2", QDBusError::errorString(domeReply.error().type())));
+        status = Dome::PARKING_ERROR;
+    }
 
     if (status != Dome::PARKING_OK)
     {
@@ -4433,8 +4454,14 @@ void Scheduler::parkDome()
 
 void Scheduler::unParkDome()
 {
-    QDBusReply<int> domeReply  = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const domeReply  = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
     Dome::ParkingStatus status = (Dome::ParkingStatus)domeReply.value();
+
+    if (domeReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Dome getParkingStatus request received DBUS error: %2", QDBusError::errorString(domeReply.error().type())));
+        status = Dome::PARKING_ERROR;
+    }
 
     if (status != Dome::UNPARKING_OK)
     {
@@ -4453,12 +4480,17 @@ void Scheduler::unParkDome()
 
 void Scheduler::checkDomeParkingStatus()
 {
+    /* FIXME: move this elsewhere */
     static int parkingFailureCount = 0;
-    QDBusReply<int> domeReply      = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
-    Dome::ParkingStatus status     = (Dome::ParkingStatus)domeReply.value();
 
-    if (domeReply.error().type() == QDBusError::UnknownObject)
+    QDBusReply<int> const domeReply = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    Dome::ParkingStatus status = (Dome::ParkingStatus)domeReply.value();
+
+    if (domeReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Dome getParkingStatus request received DBUS error: %2", QDBusError::errorString(domeReply.error().type())));
         status = Dome::PARKING_ERROR;
+    }
 
     switch (status)
     {
@@ -4519,22 +4551,28 @@ void Scheduler::checkDomeParkingStatus()
 
 bool Scheduler::isDomeParked()
 {
-    QDBusReply<int> domeReply  = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const domeReply = domeInterface->call(QDBus::AutoDetect, "getParkingStatus");
     Dome::ParkingStatus status = (Dome::ParkingStatus)domeReply.value();
 
-    if (domeReply.error().type() == QDBusError::UnknownObject)
-        return false;
+    if (domeReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Dome getParkingStatus request received DBUS error: %2", QDBusError::errorString(domeReply.error().type())));
+        status = Dome::PARKING_ERROR;
+    }
 
-    if (status == Dome::PARKING_OK || status == Dome::PARKING_IDLE)
-        return true;
-    else
-        return false;
+    return status == Dome::PARKING_OK || status == Dome::PARKING_IDLE;
 }
 
 void Scheduler::parkCap()
 {
-    QDBusReply<int> capReply      = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const capReply = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
     DustCap::ParkingStatus status = (DustCap::ParkingStatus)capReply.value();
+
+    if (capReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Cap getParkingStatus request received DBUS error: %2", QDBusError::errorString(capReply.error().type())));
+        status = DustCap::PARKING_ERROR;
+    }
 
     if (status != DustCap::PARKING_OK)
     {
@@ -4553,8 +4591,14 @@ void Scheduler::parkCap()
 
 void Scheduler::unParkCap()
 {
-    QDBusReply<int> capReply      = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
+    QDBusReply<int> const capReply = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
     DustCap::ParkingStatus status = (DustCap::ParkingStatus)capReply.value();
+
+    if (capReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Cap getParkingStatus request received DBUS error: %2", QDBusError::errorString(capReply.error().type())));
+        status = DustCap::PARKING_ERROR;
+    }
 
     if (status != DustCap::UNPARKING_OK)
     {
@@ -4573,12 +4617,17 @@ void Scheduler::unParkCap()
 
 void Scheduler::checkCapParkingStatus()
 {
+    /* FIXME: move this elsewhere */
     static int parkingFailureCount = 0;
-    QDBusReply<int> capReply       = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
+
+    QDBusReply<int> const capReply = capInterface->call(QDBus::AutoDetect, "getParkingStatus");
     DustCap::ParkingStatus status  = (DustCap::ParkingStatus)capReply.value();
 
-    if (capReply.error().type() == QDBusError::UnknownObject)
+    if (capReply.error().type() != QDBusError::NoError)
+    {
+        appendLogText(i18n("Warning! Cap getParkingStatus request received DBUS error: %2", QDBusError::errorString(capReply.error().type())));
         status = DustCap::PARKING_ERROR;
+    }
 
     switch (status)
     {
