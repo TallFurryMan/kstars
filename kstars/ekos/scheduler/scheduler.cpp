@@ -361,6 +361,7 @@ void Scheduler::addJob()
 
     //jobUnderEdit = false;
     saveJob();
+    evaluateJobs();
 }
 
 void Scheduler::saveJob()
@@ -1039,23 +1040,10 @@ void Scheduler::pause()
 
 void Scheduler::evaluateJobs()
 {
-    // Reset ALL scheduler jobs to IDLE and re-evalute them always again
-    for(SchedulerJob *job : jobs)
-    {
-        if (job->getState() == SchedulerJob::JOB_SCHEDULED)
-        {
-            if (job->getFileStartupCondition() == SchedulerJob::START_ASAP)
-            {
-                job->setStartupCondition(SchedulerJob::START_ASAP);
-                job->setStartupTime(QDateTime());
-                job->setCompletionTime(QDateTime());
-            }
+    /* Start by refreshing the number of captures already present */
+    updateCompletedJobsCount();
 
-            job->setState(SchedulerJob::JOB_IDLE);
-        }
-    }
-
-    // Now evaluate all pending jobs per the conditions set in each
+    /* Then enumerate SchedulerJobs, scheduling only what is required */
     foreach (SchedulerJob *job, jobs)
     {
         if (job->getState() > SchedulerJob::JOB_SCHEDULED)
@@ -4112,7 +4100,7 @@ void Scheduler::updateCompletedJobsCount()
 
 bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
 {
-    updateCompletedJobsCount();
+    /* updateCompletedJobsCount(); */
 
     QList<SequenceJob *> jobs;
     bool hasAutoFocus = false;
@@ -4726,6 +4714,24 @@ void Scheduler::startJobEvaluation()
     jobEvaluationOnly = true;
     if (Dawn < 0)
         calculateDawnDusk();
+
+    // Reset ALL scheduler jobs to IDLE and re-evalute them always again
+    for(SchedulerJob *job : jobs)
+    {
+        if (job->getState() == SchedulerJob::JOB_SCHEDULED)
+        {
+            if (job->getFileStartupCondition() == SchedulerJob::START_ASAP)
+            {
+                job->setStartupCondition(SchedulerJob::START_ASAP);
+                job->setStartupTime(QDateTime());
+                job->setCompletionTime(QDateTime());
+            }
+
+            job->setState(SchedulerJob::JOB_IDLE);
+        }
+    }
+
+    // Now evaluate all pending jobs per the conditions set in each
     evaluateJobs();
 }
 
