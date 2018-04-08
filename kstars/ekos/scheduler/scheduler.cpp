@@ -2845,18 +2845,16 @@ void Scheduler::checkJobStage()
 
             if (slewStatus.value() == IPS_OK && isDomeMoving == false)
             {
-                appendLogText(i18n("%1 slew is complete.", currentJob->getName()));
+                appendLogText(i18n("Job '%1' slew is complete.", currentJob->getName()));
                 currentJob->setStage(SchedulerJob::STAGE_SLEW_COMPLETE);
                 getNextAction();
-                return;
             }
             else if (slewStatus.value() == IPS_ALERT)
             {
-                appendLogText(i18n("%1 slew failed!", currentJob->getName()));
+                appendLogText(i18n("Warning! Job '%1' slew failed, marking terminated due to errors.", currentJob->getName()));
                 currentJob->setState(SchedulerJob::JOB_ERROR);
 
                 findNextJob();
-                return;
             }
         }
         break;
@@ -2880,33 +2878,33 @@ void Scheduler::checkJobStage()
             // Is focus complete?
             if (focusStatus == Ekos::FOCUS_COMPLETE)
             {
-                appendLogText(i18n("%1 focusing is complete.", currentJob->getName()));
+                appendLogText(i18n("Job '%1' focusing is complete.", currentJob->getName()));
 
                 autofocusCompleted = true;
 
                 currentJob->setStage(SchedulerJob::STAGE_FOCUS_COMPLETE);
 
                 getNextAction();
-                return;
             }
             else if (focusStatus == Ekos::FOCUS_FAILED || focusStatus == Ekos::FOCUS_ABORTED)
             {
-                appendLogText(i18n("%1 focusing failed!", currentJob->getName()));
+                appendLogText(i18n("Warning! Job '%1' focusing failed.", currentJob->getName()));
 
                 if (focusFailureCount++ < MAX_FAILURE_ATTEMPTS)
                 {
-                    appendLogText(i18n("Restarting %1 focusing procedure...", currentJob->getName()));
+                    appendLogText(i18n("Job '%1' is restarting its focusing procedure.", currentJob->getName()));
                     // Reset frame to original size.
                     focusInterface->call(QDBus::AutoDetect, "resetFrame");
                     // Restart focusing
                     startFocusing();
-                    return;
                 }
+                else
+                {
+                    appendLogText(i18n("Warning! Job '%1' focusing procedure failed, marking terminated due to errors.", currentJob->getName()));
+                    currentJob->setState(SchedulerJob::JOB_ERROR);
 
-                currentJob->setState(SchedulerJob::JOB_ERROR);
-
-                findNextJob();
-                return;
+                    findNextJob();
+                }
             }
         }
         break;
@@ -2942,7 +2940,6 @@ void Scheduler::checkJobStage()
 
                 currentJob->setStage(SchedulerJob::STAGE_ALIGN_COMPLETE);
                 getNextAction();
-                return;
             }
             else if (alignStatus == Ekos::ALIGN_FAILED || alignStatus == Ekos::ALIGN_ABORTED)
             {
@@ -2954,12 +2951,14 @@ void Scheduler::checkJobStage()
                         mountInterface->call(QDBus::AutoDetect, "resetModel");
                     appendLogText(i18n("Restarting %1 alignment procedure...", currentJob->getName()));
                     startAstrometry();
-                    return;
                 }
+                else
+                {
+                    appendLogText(i18n("Warning! Job '%1' alignment procedure failed, marking terminated due to errors.", currentJob->getName()));
+                    currentJob->setState(SchedulerJob::JOB_ERROR);
 
-                currentJob->setState(SchedulerJob::JOB_ERROR);
-
-                findNextJob();
+                    findNextJob();
+                }
             }
         }
         break;
@@ -2983,15 +2982,12 @@ void Scheduler::checkJobStage()
                 appendLogText(i18n("Warning! Job '%1' lost connection to INDI server while reslewing, marking aborted.",currentJob->getName()));
                 currentJob->setState(SchedulerJob::JOB_ABORTED);
                 checkShutdownState();
-                return;
             }
-
-            if (slewStatus.value() == IPS_OK && isDomeMoving == false)
+            else if (slewStatus.value() == IPS_OK && isDomeMoving == false)
             {
                 appendLogText(i18n("Job '%1' repositioning is complete.", currentJob->getName()));
                 currentJob->setStage(SchedulerJob::STAGE_RESLEWING_COMPLETE);
                 getNextAction();
-                return;
             }
             else if (slewStatus.value() == IPS_ALERT)
             {
@@ -2999,7 +2995,6 @@ void Scheduler::checkJobStage()
                 currentJob->setState(SchedulerJob::JOB_ERROR);
 
                 findNextJob();
-                return;
             }
         }
         break;
@@ -3027,7 +3022,6 @@ void Scheduler::checkJobStage()
 
                 currentJob->setStage(SchedulerJob::STAGE_GUIDING_COMPLETE);
                 getNextAction();
-                return;
             }
             else if (guideStatus == Ekos::GUIDE_CALIBRATION_ERROR || guideStatus == Ekos::GUIDE_ABORTED)
             {
@@ -3040,13 +3034,14 @@ void Scheduler::checkJobStage()
                 {
                     appendLogText(i18n("Job '%1' is guiding, and is restarting its guiding procedure.", currentJob->getName()));
                     startGuiding(true);
-                    return;
                 }
+                else
+                {
+                    appendLogText(i18n("Warning! Job '%1' guiding procedure failed, marking terminated due to errors.", currentJob->getName()));
+                    currentJob->setState(SchedulerJob::JOB_ERROR);
 
-                currentJob->setState(SchedulerJob::JOB_ERROR);
-
-                findNextJob();
-                return;
+                    findNextJob();
+                }
             }
         }
         break;
@@ -3060,10 +3055,8 @@ void Scheduler::checkJobStage()
                 appendLogText(i18n("Warning! Job '%1' lost connection to INDI server while capturing, marking aborted.",currentJob->getName()));
                 currentJob->setState(SchedulerJob::JOB_ABORTED);
                 checkShutdownState();
-                return;
             }
-
-            if (captureReply.value().toStdString() == "Aborted" || captureReply.value().toStdString() == "Error")
+            else if (captureReply.value().toStdString() == "Aborted" || captureReply.value().toStdString() == "Error")
             {
                 appendLogText(i18n("Warning! Job '%1' failed to capture target (%2).", currentJob->getName(), captureReply.value()));
 
@@ -3090,19 +3083,19 @@ void Scheduler::checkJobStage()
                 currentJob->setState(SchedulerJob::JOB_ERROR);
 
                 findNextJob();
-                return;
             }
-
-            if (captureReply.value().toStdString() == "Complete")
+            else if (captureReply.value().toStdString() == "Complete")
             {
                 KNotification::event(QLatin1String("EkosScheduledImagingFinished"),
                                      i18n("Ekos job (%1) - Capture finished", currentJob->getName()));
-                currentJob->setState(SchedulerJob::JOB_COMPLETE);
+
+                /* Set evaluation state so that capture count is checked again */
+                currentJob->setState(SchedulerJob::JOB_EVALUATION);
+
                 //currentJob->setStage(SchedulerJob::STAGE_COMPLETE);
                 captureInterface->call(QDBus::AutoDetect, "clearSequenceQueue");
 
                 findNextJob();
-                return;
             }
         }
         break;
