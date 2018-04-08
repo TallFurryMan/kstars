@@ -4047,35 +4047,67 @@ void Scheduler::setDirty()
 
 void Scheduler::updateCompletedJobsCount()
 {
-    QMap<QString,int> finishedFramesCount;
-    QList<SequenceJob *> seqjobs;
-    bool hasAutoFocus = false;
+    /* QMap<QString,int> finishedFramesCount; see later FIXME in that function */
 
-    capturedFramesCount.clear();
+    /* Use a temporary map in order to limit the number of file searches */
+    QMap<QString, uint16_t> newFramesCount;
 
+    /* Enumerate SchedulerJobs to count captures that are already stored */
     for (SchedulerJob *oneJob : jobs)
     {
-        if (loadSequenceQueue(oneJob->getSequenceFile().toLocalFile(), oneJob, seqjobs, hasAutoFocus) == false)
-            continue;
+        QList<SequenceJob*> seqjobs;
+        bool hasAutoFocus = false;
 
+        /* Look into the sequence requirements, bypass if invalid */
+        if (loadSequenceQueue(oneJob->getSequenceFile().toLocalFile(), oneJob, seqjobs, hasAutoFocus) == false)
+        {
+            appendLogText(i18n("Warning! Job '%1' has inaccessible sequence '%2', marking invalid.", oneJob->getName(), oneJob->getSequenceFile().toLocalFile()));
+            oneJob->setState(SchedulerJob::JOB_INVALID);
+            continue;
+        }
+
+        /* Enumerate the SchedulerJob's SequenceJobs to count captures stored for each */
         foreach (SequenceJob *oneSeqJob, seqjobs)
         {
+            /* Only consider captures stored on client (Ekos) side */
+            /* FIXME: ask the remote for the file count */
             if (oneSeqJob->getUploadMode() == ISD::CCD::UPLOAD_LOCAL)
                 continue;
 
-            QString signature = oneSeqJob->getLocalDir() + oneSeqJob->getDirectoryPostfix();
+            /* FIXME: refactor signature determination in a separate function in order to support multiple backends */
+            /* FIXME: this signature path is incoherent when there is no filter wheel on the setup - bugfix should be elsewhere though */
+            QString const signature = oneSeqJob->getLocalDir() + oneSeqJob->getDirectoryPostfix();
 
-            int completed = getCompletedFiles(signature, oneSeqJob->getFullPrefix());
+            /* Bypass this SchedulerJob if we already checked its signature */
+            switch(oneJob->getState())
+            {
+            case SchedulerJob::JOB_IDLE:
+            case SchedulerJob::JOB_EVALUATION:
+                /* We recount idle/evaluated jobs systematically */
+                break;
 
-            capturedFramesCount[signature] = completed - finishedFramesCount[signature];
+            default:
+                /* We recount other jobs if somehow we don't have any count for their signature, else we reuse the previous count */
+                QMap<QString, uint16_t>::iterator const sigCount = capturedFramesCount.find(signature);
+                if (capturedFramesCount.end() != sigCount)
+                {
+                    newFramesCount[signature] = sigCount.value();
+                    continue;
+                }
+            }
 
-            if (oneJob->getState() == SchedulerJob::JOB_COMPLETE)
-                finishedFramesCount[signature] += oneSeqJob->getCount();
+            /* Count captures already stored */
+            int const completed = getCompletedFiles(signature, oneSeqJob->getFullPrefix());
+
+            /* FIXME: finishedFramesCount isn't documented, and is getting in the way of counting the amount of captures in the storage */
+            newFramesCount[signature] += completed; /* - finishedFramesCount[signature]; */
+
+            /* if (oneJob->getState() == SchedulerJob::JOB_COMPLETE)
+                finishedFramesCount[signature] += oneSeqJob->getCount(); */
         }
-
-        qDeleteAll(seqjobs);
-        seqjobs.clear();
     }
+
+    capturedFramesCount = newFramesCount;
 }
 
 bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
