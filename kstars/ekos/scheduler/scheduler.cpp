@@ -1046,6 +1046,11 @@ void Scheduler::evaluateJobs()
     /* Then enumerate SchedulerJobs, scheduling only what is required */
     foreach (SchedulerJob *job, jobs)
     {
+        /* Let aborted jobs be rescheduled later instead of forgetting them */
+        /* FIXME: minimum altitude and altitude cutoff may cause loops here */
+        if (job->getState() == SchedulerJob::JOB_ABORTED)
+            job->setState(SchedulerJob::JOB_EVALUATION);
+
         if (job->getState() > SchedulerJob::JOB_SCHEDULED)
             continue;
 
