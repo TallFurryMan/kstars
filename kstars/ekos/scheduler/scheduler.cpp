@@ -477,7 +477,9 @@ void Scheduler::saveJob()
 
     // #3 Completion conditions
     if (sequenceCompletionR->isChecked())
+    {
         job->setCompletionCondition(SchedulerJob::FINISH_SEQUENCE);
+    }
     else if (repeatCompletionR->isChecked())
     {
         job->setCompletionCondition(SchedulerJob::FINISH_REPEAT);
@@ -485,7 +487,9 @@ void Scheduler::saveJob()
         job->setRepeatsRemaining(repeatsSpin->value());
     }
     else if (loopCompletionR->isChecked())
+    {
         job->setCompletionCondition(SchedulerJob::FINISH_LOOP);
+    }
     else
     {
         job->setCompletionCondition(SchedulerJob::FINISH_AT);
@@ -763,7 +767,7 @@ void Scheduler::resetJobEdit()
     if (jobUnderEdit == -1)
         return;
 
-    appendLogText(i18n("Edit mode cancelled."));
+    /* appendLogText(i18n("Edit mode cancelled.")); */
 
     jobUnderEdit = -1;
 
@@ -1164,7 +1168,7 @@ void Scheduler::evaluateJobs()
                 // If starting time already passed by 5 minutes (default), we mark the job as invalid
                 if (timeUntil < (-1 * Options::leadTime() * 60))
                 {
-                    dms passedUp(timeUntil / 3600.0);
+                    dms const passedUp(timeUntil / 3600.0);
                     if (job->getState() == SchedulerJob::JOB_EVALUATION)
                     {
                         appendLogText(i18n("Job '%1' startup time already passed by %2, marking invalid.",
@@ -1526,6 +1530,7 @@ void Scheduler::evaluateJobs()
                 sleepTimer.start();
             }
             // Otherise, sleep until job is ready
+            /* FIXME: if not parking, stop tracking maybe? this would prevent crashes or scheduler stops from leaving the mount to track and bump the pier */
             //else if (nextObservationTime > (Options::leadTime() * 60))
             else if (nextObservationTime > 1)
             {
@@ -1883,6 +1888,8 @@ int16_t Scheduler::calculateJobScore(SchedulerJob *job, QDateTime when)
 {
     int16_t total = 0;
 
+    /* FIXME: as soon as one score is negative, it's a no-go and other scores are unneeded */
+
     if (job->getEnforceTwilight())
         total += getDarkSkyScore(when);
     if (job->getStepPipeline() != SchedulerJob::USE_NONE)
@@ -1921,6 +1928,8 @@ int16_t Scheduler::getAltitudeScore(SchedulerJob *job, QDateTime when)
 
             // If already passed the merdian and setting we check if it is within setting alttidue cut off value (3 degrees default)
             // If it is within that value then it is useless to start the job which will end very soon so we better look for a better job.
+            /* FIXME: don't use BAD_SCORE/2, a negative result implies the job has to be aborted - we'd be annoyed if that score became positive again */
+            /* FIXME: bug here, raising target will get a negative score if under cutoff, issue mitigated by aborted jobs getting rescheduled */
             if (HA > 0 && (currentAlt - SETTING_ALTITUDE_CUTOFF) < job->getMinAltitude())
                 score = BAD_SCORE / 2.0;
             else
@@ -3182,7 +3191,7 @@ void Scheduler::getNextAction()
 
 void Scheduler::stopCurrentJobAction()
 {
-    qCDebug(KSTARS_EKOS_SCHEDULER) << "Stop current action..." << currentJob->getStage();
+    qCDebug(KSTARS_EKOS_SCHEDULER) << "Job '" << currentJob->getName() << "' is stopping current action..." << currentJob->getStage();
 
     switch (currentJob->getStage())
     {
@@ -4299,7 +4308,9 @@ void Scheduler::parkMount()
     if (status != Mount::PARKING_OK)
     {
         if (status == Mount::PARKING_BUSY)
+        {
             appendLogText(i18n("Parking mount in progress..."));
+        }
         else
         {
             mountInterface->call(QDBus::AutoDetect, "park");
@@ -5019,6 +5030,7 @@ void Scheduler::runStartupProcedure()
 {
     if (startupState == STARTUP_IDLE || startupState == STARTUP_ERROR || startupState == STARTUP_COMPLETE)
     {
+        /* FIXME: Probably issue a warning only, in case the user wants to run the startup script alone */
         if (indiState == INDI_IDLE)
         {
             KSNotification::sorry(i18n("Cannot run startup procedure while INDI devices are not online."));
