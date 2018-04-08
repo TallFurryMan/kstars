@@ -5298,22 +5298,21 @@ SequenceJob *Scheduler::processJobInfo(XMLEle *root, SchedulerJob *schedJob)
 
 int Scheduler::getCompletedFiles(const QString &path, const QString &seqPrefix)
 {
-    QString tempName;
     int seqFileCount = 0;
 
+    qCDebug(KSTARS_EKOS_SCHEDULER) << QString("Searching in '%1' for prefix '%2'...").arg(path).arg(seqPrefix);
     QDirIterator it(path, QDir::Files);
 
+    /* FIXME: this counts all files with prefix in the storage location, not just captures. DSS analysis files are counted in, for instance. */
     while (it.hasNext())
     {
-        tempName = it.next();
-        QFileInfo info(tempName);
-        tempName = info.baseName();
+        QString const fileName = QFileInfo(it.next()).baseName();
 
-        // find the prefix first
-        if (tempName.startsWith(seqPrefix) == false)
-            continue;
-
-        seqFileCount++;
+        if (fileName.startsWith(seqPrefix))
+        {
+            qCDebug(KSTARS_EKOS_SCHEDULER) << QString("> Found '%1'").arg(fileName);
+            seqFileCount++;
+        }
     }
 
     return seqFileCount;
