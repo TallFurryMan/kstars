@@ -105,8 +105,6 @@ class SchedulerJob
     StepPipeline getStepPipeline() const;
     void setStepPipeline(const StepPipeline &value);
 
-    void setStatusCell(QTableWidgetItem *cell) { statusCell = cell; }
-
     JOBStatus getState() const;
     void setState(const JOBStatus &value);
 
@@ -139,11 +137,23 @@ class SchedulerJob
     bool getEnforceTwilight() const;
     void setEnforceTwilight(bool value);
 
+    /* QTableWidgetItem *getNameCell() const; */
+    void setNameCell(QTableWidgetItem *cell);
+
+    /* QTableWidgetItem *getStatusCell() const; */
+    void setStatusCell(QTableWidgetItem *cell);
+
+    /* QTableWidgetItem *getStageCell() const; */
+    void setStageCell(QTableWidgetItem *cell);
+
     QTableWidgetItem *getEstimatedTimeCell() const;
     void setEstimatedTimeCell(QTableWidgetItem *value);
 
     QTableWidgetItem *getCaptureCountCell() const;
     void setCaptureCountCell(QTableWidgetItem *value);
+
+    QTableWidgetItem *getScoreCell() const;
+    void setScoreCell(QTableWidgetItem *value);
 
     bool getLightFramesRequired() const;
     void setLightFramesRequired(bool value);
@@ -205,10 +215,13 @@ private:
 
     StepPipeline stepPipeline { USE_NONE };
 
+    QTableWidgetItem *nameCell { nullptr };
     QTableWidgetItem *statusCell { nullptr };
+    QTableWidgetItem *stageCell { nullptr };
     QTableWidgetItem *startupCell { nullptr };
     QTableWidgetItem *estimatedTimeCell { nullptr };
     QTableWidgetItem *captureCountCell { nullptr };
+    QTableWidgetItem *scoreCell { nullptr };
 
     void updateJobCell();
 

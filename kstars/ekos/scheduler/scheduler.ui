@@ -619,7 +619,7 @@
           </column>
           <column>
            <property name="text">
-            <string>End Time</string>
+            <string>Score</string>
            </property>
           </column>
           <column>

@@ -515,49 +515,58 @@ void Scheduler::saveJob()
     else
         currentRow = queueTable->currentRow();
 
+    /* Reset job state to evaluate the changes - so this is equivalent to double-clicking the job */
+    /* FIXME: what if the job didn't change? */
+    job->setState(SchedulerJob::JOB_IDLE);
+    job->setEstimatedTime(-1);
+
     QTableWidgetItem *nameCell = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_NAME) : new QTableWidgetItem();
-    nameCell->setText(job->getName());
     nameCell->setTextAlignment(Qt::AlignHCenter);
     nameCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    job->setNameCell(nameCell);
 
     QTableWidgetItem *statusCell = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_STATUS) : new QTableWidgetItem();
     statusCell->setTextAlignment(Qt::AlignHCenter);
     statusCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     job->setStatusCell(statusCell);
-    // Refresh state
-    job->setState(job->getState());
+
+    QTableWidgetItem *captureCount = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_CAPTURES) : new QTableWidgetItem();
+    captureCount->setTextAlignment(Qt::AlignHCenter);
+    captureCount->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    /* captureCount->setText(QString::asprintf("%d/%d", job->getCompletedCount(), job->getSequenceCount())); */
+    job->setCaptureCountCell(captureCount);
+
+    QTableWidgetItem *scoreValue = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_SCORE) : new QTableWidgetItem();
+    scoreValue->setTextAlignment(Qt::AlignHCenter);
+    scoreValue->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    /* scoreValue->setText(QString::asprintf("%d", job->getScore())); */
+    job->setScoreCell(scoreValue);
 
     QTableWidgetItem *startupCell = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_STARTTIME) : new QTableWidgetItem();
-    if (startupTimeConditionR->isChecked())
+    /*if (startupTimeConditionR->isChecked())
         startupCell->setText(startupTimeEdit->text());
     else
-        startupCell->setText(QString());
+        startupCell->setText(QString());*/
     startupCell->setTextAlignment(Qt::AlignHCenter);
     startupCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     job->setStartupCell(startupCell);
 
     QTableWidgetItem *completionCell = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_ENDTIME) : new QTableWidgetItem();
-    if (timeCompletionR->isChecked())
+    /*if (timeCompletionR->isChecked())
         completionCell->setText(completionTimeEdit->text());
     else
-        completionCell->setText(QString());
+        completionCell->setText(QString());*/
     completionCell->setTextAlignment(Qt::AlignHCenter);
     completionCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-    QTableWidgetItem *captureCount = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_CAPTURES) : new QTableWidgetItem();
-    captureCount->setTextAlignment(Qt::AlignHCenter);
-    captureCount->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    captureCount->setText(QString::asprintf("%d/%d", job->getCompletedCount(), job->getSequenceCount()));
-    job->setCaptureCountCell(captureCount);
-
     QTableWidgetItem *estimatedTimeCell = (jobUnderEdit >= 0) ? queueTable->item(currentRow, (int)SCHEDCOL_DURATION) : new QTableWidgetItem();
-    if (job->getEstimatedTime() > 0)
+    /*if (job->getEstimatedTime() > 0)
     {
         QTime estimatedTime = QTime::fromMSecsSinceStartOfDay(job->getEstimatedTime() * 3600);
         estimatedTimeCell->setText(estimatedTime.toString("HH:mm:ss"));
     }
     else
-        estimatedTimeCell->setText(QString());
+        estimatedTimeCell->setText(QString());*/
     estimatedTimeCell->setTextAlignment(Qt::AlignHCenter);
     estimatedTimeCell->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     job->setEstimatedTimeCell(estimatedTimeCell);
@@ -567,6 +576,7 @@ void Scheduler::saveJob()
         queueTable->setItem(currentRow, (int)SCHEDCOL_NAME, nameCell);
         queueTable->setItem(currentRow, (int)SCHEDCOL_STATUS, statusCell);
         queueTable->setItem(currentRow, (int)SCHEDCOL_CAPTURES, captureCount);
+        queueTable->setItem(currentRow, (int)SCHEDCOL_SCORE, scoreValue);
         queueTable->setItem(currentRow, (int)SCHEDCOL_STARTTIME, startupCell);
         queueTable->setItem(currentRow, (int)SCHEDCOL_ENDTIME, completionCell);
         queueTable->setItem(currentRow, (int)SCHEDCOL_DURATION, estimatedTimeCell);

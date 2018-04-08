@@ -97,6 +97,7 @@ class Scheduler : public QWidget, public Ui::Scheduler
         SCHEDCOL_NAME = 0,
         SCHEDCOL_STATUS,
         SCHEDCOL_CAPTURES,
+        SCHEDCOL_SCORE,
         SCHEDCOL_STARTTIME,
         SCHEDCOL_ENDTIME,
         SCHEDCOL_DURATION,
