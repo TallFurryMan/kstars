@@ -4803,7 +4803,7 @@ void Scheduler::startMosaicTool()
             if (createJobSequence(root, prefix, outputDir) == false)
                 return;
 
-            QString filename = QString("%1/%2.esq").arg(outputDir, prefix);
+            QString filename = QString("%1/%2.esq").arg(outputDir).arg(prefix);
             sequenceEdit->setText(filename);
             sequenceURL = QUrl::fromLocalFile(filename);
 
@@ -4820,9 +4820,10 @@ void Scheduler::startMosaicTool()
         {
             delete (jobs.takeFirst());
             queueTable->removeRow(0);
+            queueTable->resizeColumnsToContents();
         }
 
-        QUrl mosaicURL = QUrl::fromLocalFile((QString("%1/%2_mosaic.esl").arg(outputDir, targetName)));
+        QUrl mosaicURL = QUrl::fromLocalFile((QString("%1/%2_mosaic.esl").arg(outputDir).arg(targetName)));
 
         if (saveScheduler(mosaicURL))
         {
@@ -4896,7 +4897,7 @@ bool Scheduler::createJobSequence(XMLEle *root, const QString &prefix, const QSt
                 }
                 else if (!strcmp(tagXMLEle(subEP), "FITSDirectory"))
                 {
-                    editXMLEle(subEP, QString("%1/%2").arg(outputDir, prefix).toLatin1().constData());
+                    editXMLEle(subEP, QString("%1/%2").arg(outputDir).arg(prefix).toLatin1().constData());
                 }
             }
         }
@@ -4904,7 +4905,7 @@ bool Scheduler::createJobSequence(XMLEle *root, const QString &prefix, const QSt
 
     QDir().mkpath(outputDir);
 
-    QString filename = QString("%1/%2.esq").arg(outputDir, prefix);
+    QString filename = QString("%1/%2.esq").arg(outputDir).arg(prefix);
     FILE *outputFile = fopen(filename.toLatin1().constData(), "w");
 
     if (outputFile == nullptr)
