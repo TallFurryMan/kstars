@@ -92,6 +92,17 @@ class Scheduler : public QWidget, public Ui::Scheduler
         PARKWAIT_ERROR
     } ParkWaitStatus;
 
+    /** @brief Columns, in the same order as UI. */
+    typedef enum {
+        SCHEDCOL_NAME = 0,
+        SCHEDCOL_STATUS,
+        SCHEDCOL_CAPTURES,
+        SCHEDCOL_STARTTIME,
+        SCHEDCOL_ENDTIME,
+        SCHEDCOL_DURATION,
+        SCHEDCOL_COUNT
+    } SchedulerColumns;
+
     Scheduler();
     ~Scheduler() = default;
 

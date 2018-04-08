@@ -614,7 +614,7 @@
           </column>
           <column>
            <property name="text">
-            <string>Start Time</string>
+            <string>Captures</string>
            </property>
           </column>
           <column>
@@ -624,7 +624,12 @@
           </column>
           <column>
            <property name="text">
-            <string>Captures</string>
+            <string>Start Time</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>End Time</string>
            </property>
           </column>
           <column>
