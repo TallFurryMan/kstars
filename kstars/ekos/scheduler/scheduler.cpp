@@ -3775,112 +3775,116 @@ void Scheduler::findNextJob()
 {
     jobTimer.stop();
 
+    /* FIXME: Other debug logs in that function probably */
     qCDebug(KSTARS_EKOS_SCHEDULER) << "Find next job...";
 
     if (currentJob->getState() == SchedulerJob::JOB_ERROR)
     {
-        appendLogText(i18n("%1 observation job terminated due to errors.", currentJob->getName()));
         captureBatch = 0;
-
         // Stop Guiding if it was used
         stopGuiding();
 
+        appendLogText(i18n("Job '%1' is terminated due to errors.", currentJob->getName()));
         currentJob = nullptr;
         schedulerTimer.start();
-        return;
     }
-
-    if (currentJob->getState() == SchedulerJob::JOB_ABORTED)
+    else if (currentJob->getState() == SchedulerJob::JOB_ABORTED)
     {
+        appendLogText(i18n("Job '%1' is aborted.", currentJob->getName()));
         currentJob = nullptr;
         schedulerTimer.start();
-        return;
     }
-
     // Check completion criteria
-
     // We're done whether the job completed successfully or not.
-    if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_SEQUENCE)
+    else if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_SEQUENCE)
     {
         currentJob->setState(SchedulerJob::JOB_COMPLETE);
         captureBatch = 0;
-
         // Stop Guiding if it was used
         stopGuiding();
 
+        appendLogText(i18n("Job '%1' is complete.", currentJob->getName()));
         currentJob = nullptr;
         schedulerTimer.start();
-        return;
     }
-
-    if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_REPEAT)
+    else if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_REPEAT)
     {
         currentJob->setRepeatsRemaining(currentJob->getRepeatsRemaining() - 1);
 
         // If we're done
         if (currentJob->getRepeatsRemaining() == 0)
         {
-            appendLogText(i18n("%1 observation job is complete.", currentJob->getName()));
             currentJob->setState(SchedulerJob::JOB_COMPLETE);
-
             stopCurrentJobAction();
             stopGuiding();
 
+            appendLogText(i18np("Job '%1' is complete after #%2 batch.",
+                                "Job '%1' is complete after #%2 batches.",
+                                currentJob->getName(), currentJob->getRepeatsRequired()));
             currentJob = nullptr;
             schedulerTimer.start();
-            return;
         }
+        else
+        {
+            /* FIXME: raise priority to allow other jobs to schedule in-between */
 
-        appendLogText(i18n("Repeating %1 observation job. %2 runs remaining.", currentJob->getName(),
-                           currentJob->getRepeatsRemaining()));
-        currentJob->setState(SchedulerJob::JOB_BUSY);
-        currentJob->setStage(SchedulerJob::STAGE_CAPTURING);
+            currentJob->setState(SchedulerJob::JOB_BUSY);
+            currentJob->setStage(SchedulerJob::STAGE_CAPTURING);
+            startCapture();
 
-        startCapture();
-        jobTimer.start();
-        return;
+            appendLogText(i18np("Job '%1' is repeating, #%2 batch remaining.",
+                                "Job '%1' is repeating, #%2 batches remaining.",
+                                currentJob->getName(), currentJob->getRepeatsRemaining()));
+            /* currentJob remains the same */
+            jobTimer.start();
+        }
     }
-
-    if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP)
+    else if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP)
     {
         currentJob->setState(SchedulerJob::JOB_BUSY);
         currentJob->setStage(SchedulerJob::STAGE_CAPTURING);
         captureBatch++;
-
         startCapture();
-        jobTimer.start();
-        return;
-    }
 
-    if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_AT)
+        appendLogText(i18n("Job '%1' is repeating, looping indefinitely.", currentJob->getName()));
+        /* currentJob remains the same */
+        jobTimer.start();
+    }
+    else if (currentJob->getCompletionCondition() == SchedulerJob::FINISH_AT)
     {
         if (KStarsData::Instance()->lt().secsTo(currentJob->getCompletionTime()) <= 0)
         {
-            appendLogText(i18np("%1 observation job reached completion time with #%2 batch done. Stopping...",
-                                "%1 observation job reached completion time with #%2 batches done. Stopping...",
-                                currentJob->getName(), captureBatch + 1));
             currentJob->setState(SchedulerJob::JOB_COMPLETE);
-
             stopCurrentJobAction();
             stopGuiding();
-
             captureBatch = 0;
+
+            appendLogText(i18np("Job '%1' stopping, reached completion time with #%2 batch done.",
+                                "Job '%1' stopping, reached completion time with #%2 batches done.",
+                                currentJob->getName(), captureBatch + 1));
             currentJob   = nullptr;
             schedulerTimer.start();
-            return;
         }
         else
         {
-            appendLogText(i18n("%1 observation job completed and will restart now...", currentJob->getName()));
             currentJob->setState(SchedulerJob::JOB_BUSY);
             currentJob->setStage(SchedulerJob::STAGE_CAPTURING);
-
             captureBatch++;
-
             startCapture();
+
+            appendLogText(i18np("Job '%1' completed #%2 batch before completion time, restarted.",
+                                "Job '%1' completed #%2 batches before completion time, restarted.",
+                                currentJob->getName(), captureBatch));
+            /* currentJob remains the same */
             jobTimer.start();
-            return;
         }
+    }
+    else
+    {
+        /* Unexpected situation, mitigate by resetting the job and restarting the scheduler timer */
+        appendLogText(i18n("BUGBUG: Job '%1' timer elapsed, but no action to be taken.", currentJob->getName()));
+        currentJob = nullptr;
+        schedulerTimer.start();
     }
 }
 
