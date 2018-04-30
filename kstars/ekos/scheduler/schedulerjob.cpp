@@ -381,3 +381,8 @@ bool SchedulerJob::decreasingAltitudeOrder(SchedulerJob const *job1, SchedulerJo
     return  Ekos::Scheduler::findAltitude(job1->getTargetCoords(), job1->getStartupTime()) >
             Ekos::Scheduler::findAltitude(job2->getTargetCoords(), job2->getStartupTime());
 }
+
+bool SchedulerJob::increasingStartupTimeOrder(SchedulerJob const *job1, SchedulerJob const *job2)
+{
+    return job1->getStartupTime() < job2->getStartupTime();
+}

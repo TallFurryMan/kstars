@@ -325,6 +325,13 @@ class SchedulerJob
      */
     static bool decreasingAltitudeOrder(SchedulerJob const *a, SchedulerJob const *b);
 
+    /** @brief Compare ::SchedulerJob instances based on startup time. This is a qSort predicate, deprecated in QT5.
+     * @arg a, b are ::SchedulerJob instances to compare.
+     * @return true if the startup time of a is sooner than the priority of b.
+     * @return false if the startup time of a is later than or equal to the priority of b.
+     */
+    static bool increasingStartupTimeOrder(SchedulerJob const *a, SchedulerJob const *b);
+
 private:
     QString name;
     SkyPoint targetCoords;
