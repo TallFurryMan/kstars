@@ -380,7 +380,6 @@ void Scheduler::saveJob()
         if(SchedulerJob::FINISH_LOOP == job->getCompletionCondition())
             appendLogText(i18n("Warning! Job '%1' has completion condition set to infinite repeat, other jobs may not execute.",job->getName()));
 
-
     if (nameEdit->text().isEmpty())
     {
         appendLogText(i18n("Target name is required."));
@@ -1044,20 +1043,38 @@ void Scheduler::evaluateJobs()
     {
         /* Let aborted jobs be rescheduled later instead of forgetting them */
         /* FIXME: minimum altitude and altitude cutoff may cause loops here */
-        if (job->getState() == SchedulerJob::JOB_ABORTED)
-            job->setState(SchedulerJob::JOB_EVALUATION);
-
-        if (job->getState() > SchedulerJob::JOB_SCHEDULED)
-            continue;
-
-        // If job is idle, let's set it up for evaluation.
-        if (job->getState() == SchedulerJob::JOB_IDLE)
+        switch (job->getState())
         {
-            job->setState(SchedulerJob::JOB_EVALUATION);
-            job->setEstimatedTime(-1);
+            /* If job is idle, set it for evaluation */
+            case SchedulerJob::JOB_IDLE:
+                job->setState(SchedulerJob::JOB_EVALUATION);
+                job->setEstimatedTime(-1);
+                break;
+
+            /* If job is aborted, reset it for evaluation */
+            case SchedulerJob::JOB_ABORTED:
+                job->setState(SchedulerJob::JOB_EVALUATION);
+                break;
+
+            /* If job is scheduled, in error, invalid or complete, bypass evaluation */
+            case SchedulerJob::JOB_SCHEDULED:
+            case SchedulerJob::JOB_ERROR:
+            case SchedulerJob::JOB_INVALID:
+            case SchedulerJob::JOB_COMPLETE:
+                continue;
+
+            /* If job is busy, edge case, bypass evaluation */
+            case SchedulerJob::JOB_BUSY:
+                continue;
+
+            /* Else evaluate */
+            case SchedulerJob::JOB_EVALUATION:
+            default:
+                break;
         }
 
         // In case of a repeating jobs, let's make sure we have more runs left to go
+        /* FIXME: if finding a repeated job with no repeats remaining, state this is a safeguard - Is it really? Set complete? */
         if (job->getCompletionCondition() == SchedulerJob::FINISH_REPEAT)
         {
             if (job->getRepeatsRemaining() == 0)
@@ -1074,12 +1091,6 @@ void Scheduler::evaluateJobs()
                 break;
             else if(a_job->getName() == job->getName() && a_job->getSequenceFile() == job->getSequenceFile())
                 appendLogText(i18n("Warning! Job '%1' is duplicated (same target, same sequence file), the scheduler will consider the same storage for captures!"));
-
-        int16_t score = 0;
-
-        QDateTime now = KStarsData::Instance()->lt();
-
-        /* FIXME: it is possible to evaluate jobs while KStars has a time offset, so warn the user about this */
 
         // -1 = Job is not estimated yet
         // -2 = Job is estimated but time is unknown
@@ -1098,6 +1109,10 @@ void Scheduler::evaluateJobs()
             job->setState(SchedulerJob::JOB_COMPLETE);
             continue;
         }
+
+        int16_t score = 0;
+        /* FIXME: it is possible to evaluate jobs while KStars has a time offset, so warn the user about this */
+        QDateTime now = KStarsData::Instance()->lt();
 
         // #1 Check startup conditions
         switch (job->getStartupCondition())
@@ -1278,6 +1293,11 @@ void Scheduler::evaluateJobs()
         if (job->getState() == SchedulerJob::JOB_EVALUATION)
             job->setState(SchedulerJob::JOB_SCHEDULED);
     }
+
+    /*
+     * At this step, we scheduled all jobs that had to be scheduled because they could not start as soon as possible.
+     * Now we check the amount of jobs we have to run.
+     */
 
     int invalidJobs = 0, completedJobs = 0, abortedJobs = 0, upcomingJobs = 0;
 
