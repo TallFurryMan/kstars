@@ -26,14 +26,14 @@ class SchedulerJob
 
     /** @brief States of a SchedulerJob. */
     typedef enum {
-        JOB_IDLE,
-        JOB_EVALUATION,
-        JOB_SCHEDULED,
-        JOB_BUSY,
-        JOB_ERROR,
-        JOB_ABORTED,
-        JOB_INVALID,
-        JOB_COMPLETE
+        JOB_IDLE,       /**< Job was just created, and is not evaluated yet */
+        JOB_EVALUATION, /**< Job is being evaluated */
+        JOB_SCHEDULED,  /**< Job was evaluated, and has a schedule */
+        JOB_BUSY,       /**< Job is being processed */
+        JOB_ERROR,      /**< Job encountered a fatal issue while processing, and must be reset manually */
+        JOB_ABORTED,    /**< Job encountered a transitory issue while processing, and will be rescheduled */
+        JOB_INVALID,    /**< Job has an incorrect configuration, and cannot proceed */
+        JOB_COMPLETE    /**< Job finished all required captures */
     } JOBStatus;
 
     /** @brief Running stages of a SchedulerJob. */
