@@ -458,6 +458,7 @@ void Scheduler::saveJob()
 
     /* Store the original startup condition */
     job->setFileStartupCondition(job->getStartupCondition());
+    job->setFileStartupTime(job->getStartupTime());
 
     // #2 Constraints
 
@@ -3674,7 +3675,7 @@ bool Scheduler::saveScheduler(const QUrl &fileURL)
         else if (job->getFileStartupCondition() == SchedulerJob::START_CULMINATION)
             outstream << "<Condition value='" << job->getCulminationOffset() << "'>Culmination</Condition>" << endl;
         else if (job->getFileStartupCondition() == SchedulerJob::START_AT)
-            outstream << "<Condition value='" << job->getStartupTime().toString(Qt::ISODate) << "'>At</Condition>"
+            outstream << "<Condition value='" << job->getFileStartupTime().toString(Qt::ISODate) << "'>At</Condition>"
                       << endl;
         outstream << "</StartupCondition>" << endl;
 

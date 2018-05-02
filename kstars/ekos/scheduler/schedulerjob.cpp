@@ -198,6 +198,11 @@ void SchedulerJob::setFileStartupCondition(const StartupCondition &value)
     fileStartupCondition = value;
 }
 
+void SchedulerJob::setFileStartupTime(const QDateTime &value)
+{
+    fileStartupTime = value;
+}
+
 void SchedulerJob::setEstimatedTime(const int64_t &value)
 {
     estimatedTime = value;
@@ -410,7 +415,7 @@ void SchedulerJob::reset()
     stage = STAGE_IDLE;
     estimatedTime = -1;
     startupCondition = fileStartupCondition;
-    startupTime = fileStartupCondition == START_AT ? startupTime : QDateTime();
+    startupTime = fileStartupCondition == START_AT ? fileStartupTime : QDateTime();
     /* No change to culmination offset */
     repeatsRemaining = repeatsRequired;
 }

@@ -147,8 +147,17 @@ class SchedulerJob
     void setDateTimeDisplayFormat(const QString &value);
     /** @} */
 
+    /** @brief Original startup condition, as entered by the user. */
+    /** @{ */
     StartupCondition getFileStartupCondition() const { return fileStartupCondition; }
     void setFileStartupCondition(const StartupCondition &value);
+    /** @} */
+
+    /** @brief Original time at which the job must start, as entered by the user. */
+    /** @{ */
+    QDateTime getFileStartupTime() const { return fileStartupTime; }
+    void setFileStartupTime(const QDateTime &value);
+    /** @} */
 
     /** @brief Whether this job requires re-focus while running its capture sequence. */
     /** @{ */
@@ -180,7 +189,12 @@ class SchedulerJob
     void setNameCell(QTableWidgetItem *cell);
     /** @} */
 
-    /** @brief Current state of the scheduler job. */
+    /** @brief Current state of the scheduler job.
+     * Setting state to JOB_ABORTED automatically resets the startup characteristics.
+     * Setting state to JOB_INVALID automatically resets the startup characteristics and the duration estimation.
+     * @see SchedulerJob::setStartupCondition, SchedulerJob::setFileStartupCondition, SchedulerJob::setStartupTime
+     * and SchedulerJob::setFileStartupTime.
+     */
     /** @{ */
     JOBStatus getState() const { return state; }
     void setState(const JOBStatus &value);
@@ -345,6 +359,7 @@ private:
     int sequenceCount { 0 };
     int completedCount { 0 };
 
+    QDateTime fileStartupTime;
     QDateTime startupTime;
     QDateTime completionTime;
 
