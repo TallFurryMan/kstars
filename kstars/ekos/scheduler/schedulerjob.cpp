@@ -92,6 +92,21 @@ void SchedulerJob::setState(const JOBStatus &value)
     if (JOB_ERROR == state)
         KNotification::event(QLatin1String("EkosSchedulerJobFail"), i18n("Ekos job failed (%1)", getName()));
 
+    /* If job becomes invalid, automatically reset its startup characteristics, and force its duration to be reestimated */
+    if (JOB_INVALID == value)
+    {
+        setStartupCondition(fileStartupCondition);
+        setStartupTime(fileStartupTime);
+        setEstimatedTime(-1);
+    }
+
+    /* If job is aborted, automatically reset its startup characteristics */
+    if (JOB_ABORTED == value)
+    {
+        setStartupCondition(fileStartupCondition);
+        /* setStartupTime(fileStartupTime); */
+    }
+
     updateJobCell();
 }
 
@@ -312,7 +327,41 @@ void SchedulerJob::updateJobCell()
 
     if (startupCell)
     {
-        startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+        /* Display a startup time if job is running, scheduled to run or about to be re-scheduled */
+        if (JOB_SCHEDULED == state || JOB_BUSY == state || JOB_ABORTED == state) switch (fileStartupCondition)
+        {
+            /* If the original condition is START_AT/START_CULMINATION, startup time is fixed */
+            case START_AT:
+            case START_CULMINATION:
+                startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+                startupCell->setIcon(QIcon::fromTheme("chronometer"));
+                break;
+
+            /* If the original condition is START_ASAP, startup time is informational */
+            case START_ASAP:
+                startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+                startupCell->setIcon(QIcon());
+                break;
+
+            /* Else do not display any startup time */
+            default:
+                startupCell->setText(QString());
+                startupCell->setIcon(QIcon());
+                break;
+        }
+        /* Display a missed startup time if job is invalid */
+        else if (JOB_INVALID == state && START_AT == fileStartupCondition)
+        {
+            startupCell->setText(startupTime.toString(dateTimeDisplayFormat));
+            startupCell->setIcon(QIcon());
+        }
+        /* Else do not display any startup time */
+        else
+        {
+            startupCell->setText(QString());
+            startupCell->setIcon(QIcon());
+        }
+
         startupCell->tableWidget()->resizeColumnToContents(startupCell->column());
     }
 
