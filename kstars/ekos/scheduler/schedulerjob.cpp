@@ -143,30 +143,53 @@ void SchedulerJob::setStatusCell(QTableWidgetItem *value)
 {
     statusCell = value;
     updateJobCell();
+    if (statusCell)
+        statusCell->setToolTip(i18n("Current status of job '%1', managed by the Scheduler.\n"
+                                    "If invalid, the Scheduler was not able to find a proper observation time for the target.\n"
+                                    "If aborted, the Scheduler missed the scheduled time or encountered transitory issues and will reschedule the job.\n"
+                                    "If complete, the Scheduler verified that all sequence captures requested were stored, including repeats.",
+                                    name));
 }
 
 void SchedulerJob::setStartupCell(QTableWidgetItem *value)
 {
     startupCell = value;
     updateJobCell();
+    if (startupCell)
+        startupCell->setToolTip(i18n("Startup time for job '%1', as estimated by the Scheduler.\n"
+                                     "Fixed time from user or culmination time is marked with a chronometer symbol. ",
+                                     name));
 }
 
 void SchedulerJob::setCompletionCell(QTableWidgetItem *value)
 {
     completionCell = value;
     updateJobCell();
+    if (completionCell)
+        completionCell->setToolTip(i18n("Completion time for job '%1', as estimated by the Scheduler.\n"
+                                        "Can be specified by the user to limit duration of looping jobs.\n",
+                                        name));
 }
 
 void SchedulerJob::setCaptureCountCell(QTableWidgetItem *value)
 {
     captureCountCell = value;
     updateJobCell();
+    if (captureCountCell)
+        captureCountCell->setToolTip(i18n("Count of captures stored for job '%1', based on its sequence job.\n"
+                                          "This is a summary, additional specific frame types may be required to complete the job.",
+                                          name));
 }
 
 void SchedulerJob::setScoreCell(QTableWidgetItem *value)
 {
     scoreCell = value;
     updateJobCell();
+    if (scoreCell)
+        scoreCell->setToolTip(i18n("Current score for job '%1', from its altitude, moon separation and sky darkness.\n"
+                                   "Negative if adequate altitude is not achieved yet or if there is no proper observation time today.\n"
+                                   "The Scheduler will refresh scores when picking a new candidate job.",
+                                   name));
 }
 
 void SchedulerJob::setDateTimeDisplayFormat(const QString &value)
@@ -228,6 +251,10 @@ void SchedulerJob::setEstimatedTimeCell(QTableWidgetItem *value)
 {
     estimatedTimeCell = value;
     updateJobCell();
+    if (estimatedTimeCell)
+        estimatedTimeCell->setToolTip(i18n("Duration job '%1' will take to complete when started, as estimated by the Scheduler.\n"
+                                       "Depends on the actions to be run, and the sequence job to be processed.",
+                                       name));
 }
 
 void SchedulerJob::setLightFramesRequired(bool value)
@@ -260,7 +287,6 @@ void SchedulerJob::setTargetCoords(dms& ra, dms& dec)
     targetCoords.updateCoordsNow(KStarsData::Instance()->updateNum());
 }
 
-/* FIXME: unrelated to model, move this in the view */
 void SchedulerJob::updateJobCell()
 {
     if (nameCell)
@@ -296,7 +322,7 @@ void SchedulerJob::updateJobCell()
 
     if (stageCell || stageLabel)
     {
-        /* Translated string cache - overkill, probably, and doesn't warn about missing enums like switch/case shouldi ; also, not thread-safe */
+        /* Translated string cache - overkill, probably, and doesn't warn about missing enums like switch/case should ; also, not thread-safe */
         /* FIXME: this should work with a static initializer in C++11, but QT versions are touchy on this, and perhaps i18n can't be used? */
         static QMap<JOBStage, QString> stageStrings;
         static QString stageStringUnknown;
