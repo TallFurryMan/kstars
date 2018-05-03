@@ -460,6 +460,11 @@ void Scheduler::saveJob()
     job->setFileStartupCondition(job->getStartupCondition());
     job->setFileStartupTime(job->getStartupTime());
 
+    /* Warn if appending a job with a startup time that is in the past */
+    if (SchedulerJob::START_AT == job->getFileStartupCondition())
+        if (job->getStartupTime() < KStarsData::Instance()->lt())
+            appendLogText(i18n("Warning! Job '%1' has startup time set int the past, and will be marked invalid when evaluated.", job->getName()));
+
     // #2 Constraints
 
     // Do we have minimum altitude constraint?
@@ -1027,10 +1032,12 @@ void Scheduler::setCurrentJob(SchedulerJob *job)
     if (currentJob)
     {
         currentJob->setStageLabel(jobStatus);
+        queueTable->selectRow(currentJob->getStartupCell()->row());
     }
     else
     {
         jobStatus->setText(i18n("No job running"));
+        /* queueTable->selectRow(0); */
     }
 }
 
