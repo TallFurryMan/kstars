@@ -4308,8 +4308,6 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
 
     schedJob->setInSequenceFocus(hasAutoFocus);
 
-    bool lightFramesRequired = false;
-
     int totalSequenceCount = 0, totalCompletedCount = 0;
     double totalImagingTime  = 0;
     bool rememberJobProgress = Options::rememberJobProgress();
@@ -4322,18 +4320,6 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         {
             qCInfo(KSTARS_EKOS_SCHEDULER) << QString("%1 duration cannot be estimated time since the sequence saves the files remotely.").arg(seqName);
             schedJob->setEstimatedTime(-2);
-
-            // Iterate over all sequence jobs, if just one requires FRAME_LIGHT then we set it as is and return
-            foreach (SequenceJob *oneJob, seqJobs)
-            {
-                if (oneJob->getFrameType() == FRAME_LIGHT)
-                {
-                    lightFramesRequired = true;
-                    break;
-                }
-            }
-
-            schedJob->setLightFramesRequired(lightFramesRequired);
             qDeleteAll(seqJobs);
             return true;
         }
@@ -4432,19 +4418,6 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
             {
                 qCInfo(KSTARS_EKOS_SCHEDULER) << QString("%1 completed its sequence of %2 light frames.").arg(seqName).arg(captures_required);
             }
-            else
-            {
-                lightFramesRequired = true;
-
-                // In some cases we do not need to calculate time we just need to know
-                // if light frames are required or not. So we break out
-                /*
-                if (schedJob->getCompletionCondition() == SchedulerJob::FINISH_LOOP ||
-                    (schedJob->getStartupCondition() == SchedulerJob::START_AT &&
-                     schedJob->getCompletionCondition() == SchedulerJob::FINISH_AT))
-                    break;
-                */
-            }
         }
         else
         {
@@ -4483,7 +4456,6 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         }
     }
 
-    schedJob->setLightFramesRequired(lightFramesRequired);
     schedJob->setSequenceCount(totalSequenceCount);
     schedJob->setCompletedCount(totalCompletedCount);
 
@@ -4512,7 +4484,7 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
     }
     else
     {
-        if (lightFramesRequired)
+        if (schedJob->getLightFramesRequired())
         {
             /* FIXME: estimation doesn't need to consider repeats, those will be optimized away by findNextJob (this is a regression) */
             /* FIXME: estimation should base on actual measure of each step, eventually with preliminary data as what it used now */
