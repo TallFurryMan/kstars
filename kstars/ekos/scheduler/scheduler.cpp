@@ -406,6 +406,8 @@ void Scheduler::saveJob()
         return;
     }
 
+    /* FIXME: verify associated sequence when saving? */
+
     // Create or Update a scheduler job
     SchedulerJob *job = nullptr;
 
@@ -5478,6 +5480,10 @@ SequenceJob *Scheduler::processJobInfo(XMLEle *root, SchedulerJob *schedJob)
     double exposure    = 0;
     bool filterEnabled = false, expEnabled = false, tsEnabled = false;
 
+    /* Reset light frame presence flag before enumerating */
+    if (nullptr != schedJob)
+        schedJob->setLightFramesRequired(false);
+
     for (ep = nextXMLEle(root, 1); ep != nullptr; ep = nextXMLEle(root, 0))
     {
         if (!strcmp(tagXMLEle(ep), "Exposure"))
@@ -5492,7 +5498,12 @@ SequenceJob *Scheduler::processJobInfo(XMLEle *root, SchedulerJob *schedJob)
         else if (!strcmp(tagXMLEle(ep), "Type"))
         {
             frameType = QString(pcdataXMLEle(ep));
-            job->setFrameType(frameTypes[frameType]);
+
+            /* Record frame type and mark presence of light frames for this sequence */
+            CCDFrameType const frameEnum = frameTypes[frameType];
+            job->setFrameType(frameEnum);
+            if (FRAME_LIGHT == frameEnum && nullptr != schedJob)
+                schedJob->setLightFramesRequired(true);
         }
         else if (!strcmp(tagXMLEle(ep), "Prefix"))
         {
