@@ -4476,6 +4476,14 @@ bool Scheduler::estimateJobTime(SchedulerJob *schedJob)
         appendLogText(i18n("Job '%1' will run for %2.", schedJob->getName(), dms(diff / 3600.0f).toHMSString()));
         schedJob->setEstimatedTime(diff);
     }
+    // If we know finish time only, we can roughly estimate the time considering the job starts now
+    else if (schedJob->getStartupCondition() != SchedulerJob::START_AT &&
+        schedJob->getCompletionCondition() == SchedulerJob::FINISH_AT)
+    {
+        qint64 const diff = KStarsData::Instance()->lt().secsTo(schedJob->getCompletionTime());
+        appendLogText(i18n("Job '%1' will run for %2 if started now.", schedJob->getName(), dms(diff / 3600.0f).toHMSString()));
+        schedJob->setEstimatedTime(diff);
+    }
     // Rely on the estimated imaging time to determine whether this job is complete or not - this makes the estimated time null
     else if (totalImagingTime <= 0)
     {
