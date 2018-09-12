@@ -3014,21 +3014,11 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "RefocusEveryN"))
                 {
-                    // FIXME: Refocus periodicity is serialized even when disabled, so load it
-                    if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
-                    {
-                        refocusEveryNCheck->setChecked(true);
-                        int minutesValue = cLocale.toInt(pcdataXMLEle(ep));
-                        if (minutesValue > 0)
-                        {
-                            refocusEveryNMinutesValue = minutesValue;
-                            refocusEveryN->setValue(refocusEveryNMinutesValue);
-                        }
-                        else
-                            refocusEveryNMinutesValue = 0;
-                    }
-                    else
-                        refocusEveryNCheck->setChecked(false);
+                    refocusEveryNCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"));
+                    int const minutesValue = cLocale.toInt(pcdataXMLEle(ep));
+                    // Set the refocus period from XML, or reset it to zero, don't let another unrelated older refocus period be used.
+                    refocusEveryNMinutesValue = minutesValue > 0 ? minutesValue : 0;
+                    refocusEveryN->setValue(refocusEveryNMinutesValue);
                 }
                 else if (!strcmp(tagXMLEle(ep), "MeridianFlip"))
                 {
