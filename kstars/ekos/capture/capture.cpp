@@ -3023,7 +3023,7 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "MeridianFlip"))
                 {
-                    meridianCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"))
+                    meridianCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"));
                     meridianHours->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
                 }
                 else if (!strcmp(tagXMLEle(ep), "CCD"))
