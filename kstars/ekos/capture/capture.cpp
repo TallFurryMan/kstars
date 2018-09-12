@@ -3009,6 +3009,7 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                     autofocusCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"));
                     double const HFRValue = cLocale.toDouble(pcdataXMLEle(ep));
                     // Set the HFR value from XML, or reset it to zero, don't let another unrelated older HFR be used
+                    // Note that HFR value will only be serialized to XML when option "Save Sequence HFR to File" is enabled
                     fileHFR = HFRValue > 0.0 ? HFRValue : 0.0;
                     HFRPixels->setValue(fileHFR);
                 }
@@ -3360,6 +3361,11 @@ bool Capture::saveSequenceQueue(const QString &path)
     outstream << "<FilterWheel>" << FilterDevicesCombo->currentText() << "</FilterWheel>" << endl;
     outstream << "<GuideDeviation enabled='" << (guideDeviationCheck->isChecked() ? "true" : "false") << "'>"
               << cLocale.toString(guideDeviation->value()) << "</GuideDeviation>" << endl;
+    // Issue a warning when autofocus is enabled but Ekos options prevent HFR value from being written
+    if (autofocusCheck->isChecked() && !Options::saveHFRToFile())
+        appendLogText(i18n(
+                    "Warning: HFR-based autofocus is set but option \"Save Sequence HFR Value to File\" is not enabled. "
+                    "Current HFR value will not be written to sequence file."));
     outstream << "<Autofocus enabled='" << (autofocusCheck->isChecked() ? "true" : "false") << "'>"
               << cLocale.toString(Options::saveHFRToFile() ? HFRPixels->value() : 0) << "</Autofocus>" << endl;
     outstream << "<RefocusEveryN enabled='" << (refocusEveryNCheck->isChecked() ? "true" : "false") << "'>"
