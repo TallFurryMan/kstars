@@ -2976,13 +2976,16 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
     XMLEle *ep   = nullptr;
     char c;
 
+    // We expect all data read from the XML to be in the C locale - QLocale::c().
+    QLocale cLocale = QLocale::c();
+
     while (sFile.getChar(&c))
     {
         root = readXMLEle(xmlParser, c, errmsg);
 
         if (root)
         {
-            double sqVersion = atof(findXMLAttValu(root, "version"));
+            double sqVersion = cLocale.toFloat(findXMLAttValu(root, "version"));
             if (sqVersion < SQ_COMPAT_VERSION)
             {
                 appendLogText(i18n("Deprecated sequence file format version %1. Please construct a new sequence file.",
@@ -2998,20 +3001,23 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "GuideDeviation"))
                 {
+                    // FIXME: GuideDeviation value is serialized even when disabled, so load it
                     if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
                     {
                         guideDeviationCheck->setChecked(true);
-                        guideDeviation->setValue(atof(pcdataXMLEle(ep)));
+                        guideDeviation->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
                     }
                     else
                         guideDeviationCheck->setChecked(false);
                 }
                 else if (!strcmp(tagXMLEle(ep), "Autofocus"))
                 {
+                    // FIXME: HFR value is serialized even when disabled, so load it
                     if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
                     {
                         autofocusCheck->setChecked(true);
-                        float HFRValue = atof(pcdataXMLEle(ep));
+                        // FIXME: HFRPixels is a QDoubleSpinBox
+                        float HFRValue = cLocale.toFloat(pcdataXMLEle(ep));
                         if (HFRValue > 0)
                         {
                             fileHFR = HFRValue;
@@ -3025,10 +3031,11 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "RefocusEveryN"))
                 {
+                    // FIXME: Refocus periodicity is serialized even when disabled, so load it
                     if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
                     {
                         refocusEveryNCheck->setChecked(true);
-                        int minutesValue = atof(pcdataXMLEle(ep));
+                        int minutesValue = cLocale.toInt(pcdataXMLEle(ep));
                         if (minutesValue > 0)
                         {
                             refocusEveryNMinutesValue = minutesValue;
@@ -3042,10 +3049,11 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "MeridianFlip"))
                 {
+                    // FIXME: RA limit for meridian flip is serialized even when disabled, so load it
                     if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
                     {
                         meridianCheck->setChecked(true);
-                        meridianHours->setValue(atof(pcdataXMLEle(ep)));
+                        meridianHours->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
                     }
                     else
                         meridianCheck->setChecked(false);
@@ -3089,38 +3097,40 @@ bool Capture::processJobInfo(XMLEle *root)
     XMLEle *subEP;
     rotatorSettings->setRotationEnforced(false);
 
+    QLocale cLocale = QLocale::c();
+
     for (ep = nextXMLEle(root, 1); ep != nullptr; ep = nextXMLEle(root, 0))
     {
         if (!strcmp(tagXMLEle(ep), "Exposure"))
-            exposureIN->setValue(atof(pcdataXMLEle(ep)));
+            exposureIN->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
         else if (!strcmp(tagXMLEle(ep), "Binning"))
         {
             subEP = findXMLEle(ep, "X");
             if (subEP)
-                binXIN->setValue(atoi(pcdataXMLEle(subEP)));
+                binXIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
             subEP = findXMLEle(ep, "Y");
             if (subEP)
-                binYIN->setValue(atoi(pcdataXMLEle(subEP)));
+                binYIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
         }
         else if (!strcmp(tagXMLEle(ep), "Frame"))
         {
             subEP = findXMLEle(ep, "X");
             if (subEP)
-                frameXIN->setValue(atoi(pcdataXMLEle(subEP)));
+                frameXIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
             subEP = findXMLEle(ep, "Y");
             if (subEP)
-                frameYIN->setValue(atoi(pcdataXMLEle(subEP)));
+                frameYIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
             subEP = findXMLEle(ep, "W");
             if (subEP)
-                frameWIN->setValue(atoi(pcdataXMLEle(subEP)));
+                frameWIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
             subEP = findXMLEle(ep, "H");
             if (subEP)
-                frameHIN->setValue(atoi(pcdataXMLEle(subEP)));
+                frameHIN->setValue(cLocale.toInt(pcdataXMLEle(subEP)));
         }
         else if (!strcmp(tagXMLEle(ep), "Temperature"))
         {
             if (temperatureIN->isEnabled())
-                temperatureIN->setValue(atof(pcdataXMLEle(ep)));
+                temperatureIN->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
 
             // If force attribute exist, we change temperatureCheck, otherwise do nothing.
             if (!strcmp(findXMLAttValu(ep, "force"), "true"))
@@ -3154,11 +3164,11 @@ bool Capture::processJobInfo(XMLEle *root)
         }
         else if (!strcmp(tagXMLEle(ep), "Count"))
         {
-            countIN->setValue(atoi(pcdataXMLEle(ep)));
+            countIN->setValue(cLocale.toInt(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "Delay"))
         {
-            delayIN->setValue(atoi(pcdataXMLEle(ep)));
+            delayIN->setValue(cLocale.toInt(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "PostCaptureScript"))
         {
@@ -3174,21 +3184,21 @@ bool Capture::processJobInfo(XMLEle *root)
         }
         else if (!strcmp(tagXMLEle(ep), "UploadMode"))
         {
-            uploadModeCombo->setCurrentIndex(atoi(pcdataXMLEle(ep)));
+            uploadModeCombo->setCurrentIndex(cLocale.toInt(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "ISOIndex"))
         {
             if (ISOCombo->isEnabled())
-                ISOCombo->setCurrentIndex(atoi(pcdataXMLEle(ep)));
+                ISOCombo->setCurrentIndex(cLocale.toInt(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "FormatIndex"))
         {
-            transferFormatCombo->setCurrentIndex(atoi(pcdataXMLEle(ep)));
+            transferFormatCombo->setCurrentIndex(cLocale.toInt(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "Rotation"))
         {
             rotatorSettings->setRotationEnforced(true);
-            rotatorSettings->setTargetRotationPA(atof(pcdataXMLEle(ep)));
+            rotatorSettings->setTargetRotationPA(cLocale.toDouble(pcdataXMLEle(ep)));
         }
         else if (!strcmp(tagXMLEle(ep), "Properties"))
         {
@@ -3201,7 +3211,7 @@ bool Capture::processJobInfo(XMLEle *root)
                 for (oneNumber = nextXMLEle(subEP, 1); oneNumber != nullptr; oneNumber = nextXMLEle(subEP, 0))
                 {
                     const char *name = findXMLAttValu(oneNumber, "name");
-                    numbers[name] = atof(pcdataXMLEle(oneNumber));
+                    numbers[name] = cLocale.toDouble(pcdataXMLEle(oneNumber));
                 }
 
                 const char *name = findXMLAttValu(subEP, "name");
@@ -3232,8 +3242,8 @@ bool Capture::processJobInfo(XMLEle *root)
                         if (azEP && altEP)
                         {
                             flatFieldSource = SOURCE_WALL;
-                            wallCoord.setAz(atof(pcdataXMLEle(azEP)));
-                            wallCoord.setAlt(atof(pcdataXMLEle(altEP)));
+                            wallCoord.setAz(cLocale.toDouble(pcdataXMLEle(azEP)));
+                            wallCoord.setAlt(cLocale.toDouble(pcdataXMLEle(altEP)));
                         }
                     }
                     else
@@ -3255,13 +3265,13 @@ bool Capture::processJobInfo(XMLEle *root)
                 if (aduEP)
                 {
                     flatFieldDuration = DURATION_ADU;
-                    targetADU         = atof(pcdataXMLEle(aduEP));
+                    targetADU         = cLocale.toDouble(pcdataXMLEle(aduEP));
                 }
 
                 aduEP = findXMLEle(subEP, "Tolerance");
                 if (aduEP)
                 {
-                    targetADUTolerance = atof(pcdataXMLEle(aduEP));
+                    targetADUTolerance = cLocale.toDouble(pcdataXMLEle(aduEP));
                 }
             }
 
@@ -3372,6 +3382,9 @@ bool Capture::saveSequenceQueue(const QString &path)
 
     QTextStream outstream(&file);
 
+    // We serialize sequence data to XML using the C locale
+    QLocale cLocale = QLocale::c();
+
     outstream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << endl;
     outstream << "<SequenceQueue version='" << SQ_FORMAT_VERSION << "'>" << endl;
     if (observerName.isEmpty() == false)
@@ -3379,33 +3392,33 @@ bool Capture::saveSequenceQueue(const QString &path)
     outstream << "<CCD>" << CCDCaptureCombo->currentText() << "</CCD>" << endl;
     outstream << "<FilterWheel>" << FilterDevicesCombo->currentText() << "</FilterWheel>" << endl;
     outstream << "<GuideDeviation enabled='" << (guideDeviationCheck->isChecked() ? "true" : "false") << "'>"
-              << guideDeviation->value() << "</GuideDeviation>" << endl;
+              << cLocale.toString(guideDeviation->value()) << "</GuideDeviation>" << endl;
     outstream << "<Autofocus enabled='" << (autofocusCheck->isChecked() ? "true" : "false") << "'>"
-              << (Options::saveHFRToFile() ? HFRPixels->value() : 0) << "</Autofocus>" << endl;
+              << cLocale.toString(Options::saveHFRToFile() ? HFRPixels->value() : 0) << "</Autofocus>" << endl;
     outstream << "<RefocusEveryN enabled='" << (refocusEveryNCheck->isChecked() ? "true" : "false") << "'>"
-              << refocusEveryN->value() << "</RefocusEveryN>" << endl;
+              << cLocale.toString(refocusEveryN->value()) << "</RefocusEveryN>" << endl;
     outstream << "<MeridianFlip enabled='" << (meridianCheck->isChecked() ? "true" : "false") << "'>"
-              << meridianHours->value() << "</MeridianFlip>" << endl;
+              << cLocale.toString(meridianHours->value()) << "</MeridianFlip>" << endl;
     foreach (SequenceJob *job, jobs)
     {
         job->getPrefixSettings(rawPrefix, filterEnabled, expEnabled, tsEnabled);
 
         outstream << "<Job>" << endl;
 
-        outstream << "<Exposure>" << job->getExposure() << "</Exposure>" << endl;
+        outstream << "<Exposure>" << cLocale.toString(job->getExposure()) << "</Exposure>" << endl;
         outstream << "<Binning>" << endl;
-        outstream << "<X>" << job->getXBin() << "</X>" << endl;
-        outstream << "<Y>" << job->getXBin() << "</Y>" << endl;
+        outstream << "<X>" << cLocale.toString(job->getXBin()) << "</X>" << endl;
+        outstream << "<Y>" << cLocale.toString(job->getXBin()) << "</Y>" << endl;
         outstream << "</Binning>" << endl;
         outstream << "<Frame>" << endl;
-        outstream << "<X>" << job->getSubX() << "</X>" << endl;
-        outstream << "<Y>" << job->getSubY() << "</Y>" << endl;
-        outstream << "<W>" << job->getSubW() << "</W>" << endl;
-        outstream << "<H>" << job->getSubH() << "</H>" << endl;
+        outstream << "<X>" << cLocale.toString(job->getSubX()) << "</X>" << endl;
+        outstream << "<Y>" << cLocale.toString(job->getSubY()) << "</Y>" << endl;
+        outstream << "<W>" << cLocale.toString(job->getSubW()) << "</W>" << endl;
+        outstream << "<H>" << cLocale.toString(job->getSubH()) << "</H>" << endl;
         outstream << "</Frame>" << endl;
         if (job->getTargetTemperature() != INVALID_VALUE)
             outstream << "<Temperature force='" << (job->getEnforceTemperature() ? "true" : "false") << "'>"
-                      << job->getTargetTemperature() << "</Temperature>" << endl;
+                      << cLocale.toString(job->getTargetTemperature()) << "</Temperature>" << endl;
         if (job->getTargetFilter() >= 0)
             //outstream << "<Filter>" << job->getTargetFilter() << "</Filter>" << endl;
             outstream << "<Filter>" << job->getFilterName() << "</Filter>" << endl;
@@ -3417,9 +3430,9 @@ bool Capture::saveSequenceQueue(const QString &path)
         outstream << "<ExpEnabled>" << (expEnabled ? 1 : 0) << "</ExpEnabled>" << endl;
         outstream << "<TimeStampEnabled>" << (tsEnabled ? 1 : 0) << "</TimeStampEnabled>" << endl;
         outstream << "</Prefix>" << endl;
-        outstream << "<Count>" << job->getCount() << "</Count>" << endl;
+        outstream << "<Count>" << cLocale.toString(job->getCount()) << "</Count>" << endl;
         // ms to seconds
-        outstream << "<Delay>" << job->getDelay() / 1000 << "</Delay>" << endl;
+        outstream << "<Delay>" << cLocale.toString(job->getDelay() / 1000.0) << "</Delay>" << endl;
         if (job->getPostCaptureScript().isEmpty() == false)
             outstream << "<PostCaptureScript>" << job->getPostCaptureScript() << "</PostCaptureScript>" << endl;
         outstream << "<FITSDirectory>" << job->getLocalDir() << "</FITSDirectory>" << endl;
@@ -3442,7 +3455,8 @@ bool Capture::saveSequenceQueue(const QString &path)
             while (numberIter.hasNext())
             {
                 numberIter.next();
-                outstream << "<OneNumber name='" << numberIter.key() << "'>" << numberIter.value() << "</OneNumber>" << endl;
+                outstream << "<OneNumber name='" << numberIter.key()
+                    << "'>" << cLocale.toString(numberIter.value()) << "</OneNumber>" << endl;
             }
             outstream << "</NumberVector>" << endl;
         }
@@ -3459,8 +3473,8 @@ bool Capture::saveSequenceQueue(const QString &path)
         else if (job->getFlatFieldSource() == SOURCE_WALL)
         {
             outstream << "<Type>Wall</Type>" << endl;
-            outstream << "<Az>" << job->getWallCoord().az().Degrees() << "</Az>" << endl;
-            outstream << "<Alt>" << job->getWallCoord().alt().Degrees() << "</Alt>" << endl;
+            outstream << "<Az>" << cLocale.toString(job->getWallCoord().az().Degrees()) << "</Az>" << endl;
+            outstream << "<Alt>" << cLocale.toString(job->getWallCoord().alt().Degrees()) << "</Alt>" << endl;
         }
         else
             outstream << "<Type>DawnDust</Type>" << endl;
@@ -3472,8 +3486,8 @@ bool Capture::saveSequenceQueue(const QString &path)
         else
         {
             outstream << "<Type>ADU</Type>" << endl;
-            outstream << "<Value>" << job->getTargetADU() << "</Value>" << endl;
-            outstream << "<Tolerance>" << job->getTargetADUTolerance() << "</Tolerance>" << endl;
+            outstream << "<Value>" << cLocale.toString(job->getTargetADU()) << "</Value>" << endl;
+            outstream << "<Tolerance>" << cLocale.toString(job->getTargetADUTolerance()) << "</Tolerance>" << endl;
         }
         outstream << "</FlatDuration>" << endl;
 
