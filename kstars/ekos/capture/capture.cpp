@@ -3001,14 +3001,8 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "GuideDeviation"))
                 {
-                    // FIXME: GuideDeviation value is serialized even when disabled, so load it
-                    if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
-                    {
-                        guideDeviationCheck->setChecked(true);
-                        guideDeviation->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
-                    }
-                    else
-                        guideDeviationCheck->setChecked(false);
+                    guideDeviationCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"));
+                    guideDeviation->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
                 }
                 else if (!strcmp(tagXMLEle(ep), "Autofocus"))
                 {
