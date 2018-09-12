@@ -643,7 +643,7 @@ void Capture::checkCCD(int ccdNum)
             double temperature = 0;
             if (currentCCD->getTemperature(&temperature))
             {
-                temperatureOUT->setText(QString::number(temperature, 'f', 2));
+                temperatureOUT->setText(QString("%L1").arg(temperature, 0, 'f', 2));
                 if (temperatureIN->cleanText().isEmpty())
                     temperatureIN->setValue(temperature);
             }
@@ -1256,7 +1256,7 @@ bool Capture::setCaptureComplete()
     state = CAPTURE_IMAGE_RECEIVED;
     emit newStatus(Ekos::CAPTURE_IMAGE_RECEIVED);
 
-    currentImgCountOUT->setText(QString::number(activeJob->getCompleted()));
+    currentImgCountOUT->setText(QString("%L1").arg(activeJob->getCompleted()));
 
     // Check if we need to execute post capture script first
     if (activeJob->getPostCaptureScript().isEmpty() == false)
@@ -1626,7 +1626,7 @@ void Capture::captureImage()
     {
     case SequenceJob::CAPTURE_OK:
     {
-        appendLogText(i18n("Capturing %1-second %2 image...", QString::number(activeJob->getExposure(),'g',3), activeJob->getFilterName()));
+        appendLogText(i18n("Capturing %1-second %2 image...", QString("%L1").arg(activeJob->getExposure(), 0, 'g', 3), activeJob->getFilterName()));
         if (activeJob->isPreview() == false)
         {
             int index = jobs.indexOf(activeJob);
@@ -1790,7 +1790,7 @@ void Capture::setExposureProgress(ISD::CCDChip *tChip, double value, IPState sta
     if (targetChip != tChip || targetChip->getCaptureMode() != FITS_NORMAL || meridianFlipStage >= MF_ALIGNING)
         return;
 
-    exposeOUT->setText(QString::number(value, 'd', 2));
+    exposeOUT->setText(QString("%L1").arg(value, 0, 'd', 2));
 
     if (activeJob)
     {
@@ -1863,7 +1863,7 @@ void Capture::updateCCDTemperature(double value)
             checkCCD();
     }
 
-    temperatureOUT->setText(QString::number(value, 'f', 2));
+    temperatureOUT->setText(QString("%L1").arg(value, 0, 'f', 2));
 
     if (temperatureIN->cleanText().isEmpty())
         temperatureIN->setValue(value);
@@ -2061,7 +2061,7 @@ bool Capture::addJob(bool preview)
     jsonJob.insert("Bin", bin->text());
 
     QTableWidgetItem *exp = jobUnderEdit ? queueTable->item(currentRow, 4) : new QTableWidgetItem();
-    exp->setText(QString::number(exposureIN->value()));
+    exp->setText(QString("%L1").arg(exposureIN->value()));
     exp->setTextAlignment(Qt::AlignHCenter);
     exp->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     jsonJob.insert("Exp", exp->text());
@@ -2081,7 +2081,7 @@ bool Capture::addJob(bool preview)
     iso->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
     QTableWidgetItem *count = jobUnderEdit ? queueTable->item(currentRow, 6) : new QTableWidgetItem();
-    count->setText(QString::number(countIN->value()));
+    count->setText(QString("%L1").arg(countIN->value()));
     count->setTextAlignment(Qt::AlignHCenter);
     count->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     jsonJob.insert("Count", count->text());
@@ -2296,8 +2296,8 @@ void Capture::prepareJob(SequenceJob *job)
 
     if (activeJob->isPreview() == false)
     {
-        fullImgCountOUT->setText(QString::number(activeJob->getCount()));
-        currentImgCountOUT->setText(QString::number(activeJob->getCompleted()));
+        fullImgCountOUT->setText(QString("%L1").arg(activeJob->getCount()));
+        currentImgCountOUT->setText(QString("%L1").arg(activeJob->getCompleted()));
 
         // set the progress info
         imgProgress->setEnabled(true);
@@ -2366,7 +2366,7 @@ void Capture::prepareJob(SequenceJob *job)
         {
             activeJob->setCompleted(activeJob->getCount());
             appendLogText(i18n("Job requires %1-second %2 images, has already %3/%4 captures and does not need to run.",
-                    QString::number(job->getExposure(),'g',3), job->getFilterName(),
+                    QString("%L1").arg(job->getExposure(), 0, 'g', 3), job->getFilterName(),
                     activeJob->getCompleted(), activeJob->getCount()));
             processJobCompletion();
 
@@ -2376,9 +2376,9 @@ void Capture::prepareJob(SequenceJob *job)
         else
         {
             // There are captures to process
-            currentImgCountOUT->setText(QString::number(activeJob->getCompleted()));
+            currentImgCountOUT->setText(QString("%L1").arg(activeJob->getCompleted()));
             appendLogText(i18n("Job requires %1-second %2 images, has %3/%4 frames captured and will be processed.",
-                    QString::number(job->getExposure(),'g',3), job->getFilterName(),
+                    QString("%L1").arg(job->getExposure(), 0, 'g', 3), job->getFilterName(),
                     activeJob->getCompleted(), activeJob->getCount()));
 
             // Emit progress update - done a few lines below
@@ -2659,7 +2659,7 @@ void Capture::setGuideDeviation(double delta_ra, double delta_dec)
             appendLogText(i18n("Guiding deviation %1 exceeded limit value of %2 arcsecs, "
                                "suspending exposure and waiting for guider up to %3 seconds.",
                                deviationText, guideDeviation->value(),
-                               QString::number(guideDeviationTimer.interval()/1000.0,'g',3)));
+                               QString("%L1").arg(guideDeviationTimer.interval()/1000.0,0,'g',3)));
 
             suspend();
 
@@ -3643,11 +3643,12 @@ void Capture::constructPrefix(QString &imagePrefix)
 
         double exposureValue = exposureIN->value();
 
+        // Don't use the locale for exposure value in the capture file name, so that we get a "." as decimal separator
         if (exposureValue == static_cast<int>(exposureValue))
             // Whole number
             imagePrefix += QString::number(exposureIN->value(), 'd', 0) + QString("_secs");
-        // Decimal
         else
+            // Decimal
             imagePrefix += QString::number(exposureIN->value(), 'f', 3) + QString("_secs");
     }
     if (ISOCheck->isChecked())
@@ -4012,9 +4013,9 @@ bool Capture::checkMeridianFlip()
     if (currentHA > meridianHours->value())
     {
         //NOTE: DO NOT make the follow sentence PLURAL as the value is in double
-        appendLogText(i18n(
-                          "Current hour angle %1 hours exceeds meridian flip limit of %2 hours. Auto meridian flip is initiated.",
-                          QString::number(currentHA, 'f', 2), meridianHours->value()));
+        appendLogText(
+                i18n("Current hour angle %1 hours exceeds meridian flip limit of %2 hours. Auto meridian flip is initiated.",
+                    QString("%L1").arg(currentHA, 0, 'f', 2), QString("%L1").arg(meridianHours->value(), 0, 'f', 2)));
         meridianFlipStage = MF_INITIATED;
 
         //KNotification::event(QLatin1String("MeridianFlipStarted"), i18n("Meridian flip started"));
@@ -4903,7 +4904,7 @@ bool Capture::processPostCaptureCalibrationStage()
             nextExposure = qBound(exposureIN->minimum(), nextExposure, exposureIN->maximum());
 
             appendLogText(i18n("Current ADU is %1 Next exposure is %2 seconds.", QString::number(currentADU, 'f', 0),
-                               QString::number(nextExposure, 'f', 3)));
+                               QString("%L1").arg(nextExposure, 0, 'f', 3)));
 
             calibrationStage = CAL_CALIBRATION;
             activeJob->setExposure(nextExposure);
