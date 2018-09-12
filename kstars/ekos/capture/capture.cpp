@@ -3022,14 +3022,8 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "MeridianFlip"))
                 {
-                    // FIXME: RA limit for meridian flip is serialized even when disabled, so load it
-                    if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
-                    {
-                        meridianCheck->setChecked(true);
-                        meridianHours->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
-                    }
-                    else
-                        meridianCheck->setChecked(false);
+                    meridianCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"))
+                    meridianHours->setValue(cLocale.toDouble(pcdataXMLEle(ep)));
                 }
                 else if (!strcmp(tagXMLEle(ep), "CCD"))
                 {
