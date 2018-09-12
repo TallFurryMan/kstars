@@ -3006,22 +3006,11 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 }
                 else if (!strcmp(tagXMLEle(ep), "Autofocus"))
                 {
-                    // FIXME: HFR value is serialized even when disabled, so load it
-                    if (!strcmp(findXMLAttValu(ep, "enabled"), "true"))
-                    {
-                        autofocusCheck->setChecked(true);
-                        // FIXME: HFRPixels is a QDoubleSpinBox
-                        float HFRValue = cLocale.toFloat(pcdataXMLEle(ep));
-                        if (HFRValue > 0)
-                        {
-                            fileHFR = HFRValue;
-                            HFRPixels->setValue(HFRValue);
-                        }
-                        else
-                            fileHFR = 0;
-                    }
-                    else
-                        autofocusCheck->setChecked(false);
+                    autofocusCheck->setChecked(!strcmp(findXMLAttValu(ep, "enabled"), "true"));
+                    double const HFRValue = cLocale.toDouble(pcdataXMLEle(ep));
+                    // Set the HFR value from XML, or reset it to zero, don't let another unrelated older HFR be used
+                    fileHFR = HFRValue > 0.0 ? HFRValue : 0.0;
+                    HFRPixels->setValue(fileHFR);
                 }
                 else if (!strcmp(tagXMLEle(ep), "RefocusEveryN"))
                 {
