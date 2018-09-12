@@ -2061,7 +2061,7 @@ bool Capture::addJob(bool preview)
     jsonJob.insert("Bin", bin->text());
 
     QTableWidgetItem *exp = jobUnderEdit ? queueTable->item(currentRow, 4) : new QTableWidgetItem();
-    exp->setText(QString("%L1").arg(exposureIN->value()));
+    exp->setText(QString("%L1").arg(exposureIN->value(), 0, 'g', exposureIN->getDecimals()));
     exp->setTextAlignment(Qt::AlignHCenter);
     exp->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     jsonJob.insert("Exp", exp->text());
