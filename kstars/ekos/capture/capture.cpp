@@ -3029,6 +3029,8 @@ bool Capture::loadSequenceQueue(const QString &fileURL)
                 else if (!strcmp(tagXMLEle(ep), "CCD"))
                 {
                     CCDCaptureCombo->setCurrentText(pcdataXMLEle(ep));
+                    // Signal "activated" of QComboBox does not fire when changing the text programmatically
+                    setCCD(pcdataXMLEle(ep));
                 }
                 else if (!strcmp(tagXMLEle(ep), "FilterWheel"))
                 {
@@ -5400,6 +5402,7 @@ void Capture::setCapturedFramesMap(const QString &signature, int count)
 
 void Capture::setSettings(const QJsonObject &settings)
 {
+    // FIXME: QComboBox signal "activated" does not trigger when setting text programmatically.
     CCDCaptureCombo->setCurrentText(settings["camera"].toString());
     FilterDevicesCombo->setCurrentText(settings["fw"].toString());
     FilterPosCombo->setCurrentText(settings["filter"].toString());
