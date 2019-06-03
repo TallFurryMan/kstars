@@ -2,13 +2,15 @@
 #define FOCUSJOB_H
 
 #include "modulejob.h"
+#include <QString>
+#include <QVariant>
 
 
 
 class FocusJob : public ModuleJob
 {
 public:
-    FocusJob();
+    FocusJob(const QList<QVariant> &data, ModuleJob *parent);
 };
 
 #endif // FOCUSJOB_H

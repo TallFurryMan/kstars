@@ -1,11 +1,15 @@
 #ifndef SCHEDULER2JOB_H
 #define SCHEDULER2JOB_H
 
+#include "modulejob.h"
+#include <QAbstractItemModel>
+#include <QString>
+#include <QVariant>
 
-class Scheduler2Job
+class Scheduler2Job: public ModuleJob
 {
 public:
-    Scheduler2Job();
+    Scheduler2Job(const QList<QVariant> &data, ModuleJob *parent);
 };
 
 #endif // SCHEDULER2JOB_H

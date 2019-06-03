@@ -8,7 +8,7 @@
 class AlignJob : public ModuleJob
 {
 public:
-    AlignJob();
+    AlignJob(const QList<QVariant> &, ModuleJob *);
 };
 
 #endif // ALIGNJOB_H

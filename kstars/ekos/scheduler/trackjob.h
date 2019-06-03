@@ -2,13 +2,15 @@
 #define TRACKJOB_H
 
 #include "modulejob.h"
+#include <QString>
+#include <QVariant>
 
 
 
 class TrackJob : public ModuleJob
 {
 public:
-    TrackJob();
+    TrackJob(const QList<QVariant> &data, ModuleJob *parent);
 };
 
 #endif // TRACKJOB_H

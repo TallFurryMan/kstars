@@ -105,6 +105,7 @@ if (INDI_FOUND)
             # Scheduler
             ekos/scheduler/scheduler.ui
             ekos/scheduler/mosaic.ui
+            ekos/scheduler/scheduler2.ui
             # Capture
             ekos/capture/capture.ui
             ekos/capture/calibrationoptions.ui
@@ -167,6 +168,15 @@ if (INDI_FOUND)
             ekos/scheduler/schedulerjob.cpp
             ekos/scheduler/scheduler.cpp
             ekos/scheduler/mosaic.cpp
+
+            # Scheduler2
+            ekos/scheduler/alignjob.cpp
+            ekos/scheduler/capturejob.cpp
+            ekos/scheduler/focusjob.cpp
+            ekos/scheduler/modulejob.cpp
+            ekos/scheduler/observatoryjob.cpp
+            ekos/scheduler/scheduler2job.cpp
+            ekos/scheduler/trackjob.cpp
 
             # Focus
             ekos/focus/focus.cpp
