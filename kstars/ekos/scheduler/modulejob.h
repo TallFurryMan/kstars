@@ -10,7 +10,7 @@ class ModuleJob
 {
 public:
     explicit ModuleJob(const QList<QVariant> &data, ModuleJob * parent = 0);
-    ~ModuleJob();
+    virtual ~ModuleJob();
 public:
     void appendChild(ModuleJob *);
     int row() const;

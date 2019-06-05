@@ -1,5 +1,5 @@
-#ifndef SCHEDULER2JOB_H
-#define SCHEDULER2JOB_H
+#ifndef SCHEDULERMODEL_H
+#define SCHEDULERMODEL_H
 
 #include "modulejob.h"
 #include <QAbstractItemModel>
@@ -9,7 +9,7 @@
 class SchedulerModel: public QAbstractItemModel
 {
 public:
-    SchedulerModel(const QList<QVariant> &data, ModuleJob *parent);
+    SchedulerModel(const QList<QVariant> &data, QObject *parent = nullptr);
     ~SchedulerModel();
 public:
     QVariant data(const QModelIndex &index, int role) const override;
@@ -28,4 +28,4 @@ private:
     ModuleJob *rootItem;
 };
 
-#endif // SCHEDULER2JOB_H
+#endif // SCHEDULERMODEL_H

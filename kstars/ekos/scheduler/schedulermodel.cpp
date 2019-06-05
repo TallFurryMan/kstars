@@ -1,21 +1,26 @@
+#include "schedulermodel.h"
 #include "scheduler2job.h"
-#include "modulejob.h"
 
-Scheduler2Job::Scheduler2Job(const QList<QVariant> &data, ModuleJob *parent)
+#include <QPushButton>
+
+SchedulerModel::SchedulerModel(const QList<QVariant> &data, QObject *parent)
     : QAbstractItemModel(parent)
 {
     QList<QVariant> rootData;
-    rootData << "Title" << "Summary";
-    rootItem = new ModuleJob(rootData);
-    setupModelData(data.split(QString("\n")), rootItem);
+    rootData << "Job Title" << "Actions" << "Summary";
+    rootItem = new ModuleJob(rootData, nullptr);
+
+    QList<QVariant> childData;
+    childData << "Observation: M101" << "<Toolbar>" << "M101 RA:2h23'34 DEC:46°34'23";
+    rootItem->appendChild(new Scheduler2Job(childData, rootItem));
 }
 
-QVariant Scheduler2Job::data(const QModelIndex &index, int role) const
+SchedulerModel::~SchedulerModel()
 {
     delete rootItem;
 }
 
-QModelIndex Scheduler2Job::index(int row, int column, const QModelIndex &parent) const
+QModelIndex SchedulerModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();
@@ -57,7 +62,7 @@ int SchedulerModel::rowCount(const QModelIndex &parent) const
     if (!parent.isValid())
         parentItem = rootItem;
     else
-        parentItem = static_cast<TreeItem*>(parent.internalPointer());
+        parentItem = static_cast<ModuleJob*>(parent.internalPointer());
 
     return parentItem->childCount();
 }
@@ -65,7 +70,7 @@ int SchedulerModel::rowCount(const QModelIndex &parent) const
 int SchedulerModel::columnCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
-        return static_cast<TreeItem*>(parent.internalPointer())->columnCount();
+        return static_cast<ModuleJob*>(parent.internalPointer())->columnCount();
     else
         return rootItem->columnCount();
 }
@@ -78,7 +83,7 @@ QVariant SchedulerModel::data(const QModelIndex &index, int role) const
      if (role != Qt::DisplayRole)
          return QVariant();
 
-     TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+     ModuleJob *item = static_cast<ModuleJob*>(index.internalPointer());
 
      return item->data(index.column());
 }

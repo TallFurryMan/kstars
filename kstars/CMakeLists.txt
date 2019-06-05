@@ -177,6 +177,8 @@ if (INDI_FOUND)
             ekos/scheduler/observatoryjob.cpp
             ekos/scheduler/scheduler2job.cpp
             ekos/scheduler/trackjob.cpp
+            ekos/scheduler/scheduler2.cpp
+            ekos/scheduler/schedulermodel.cpp
 
             # Focus
             ekos/focus/focus.cpp

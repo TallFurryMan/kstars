@@ -2,9 +2,6 @@
 #define SCHEDULER2JOB_H
 
 #include "modulejob.h"
-#include <QAbstractItemModel>
-#include <QString>
-#include <QVariant>
 
 class Scheduler2Job: public ModuleJob
 {

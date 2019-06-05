@@ -1,9 +1,8 @@
 #include "modulejob.h"
 
 ModuleJob::ModuleJob(const QList<QVariant> &data, ModuleJob *parent)
-    : m_parentItem(parent), m_itemData(data)
+    : m_itemData(data), m_parentItem(parent)
 {
-
 }
 
 ModuleJob::~ModuleJob()

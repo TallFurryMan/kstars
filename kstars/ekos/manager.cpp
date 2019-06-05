@@ -239,6 +239,9 @@ Manager::Manager(QWidget * parent) : QDialog(parent)
     schedulerProcess.reset(new Ekos::Scheduler());
     toolsWidget->addTab(schedulerProcess.get(), QIcon(":/icons/ekos_scheduler.png"), "");
     toolsWidget->tabBar()->setTabToolTip(1, i18n("Scheduler"));
+    scheduler2Process.reset(new Ekos::Scheduler2());
+    toolsWidget->addTab(scheduler2Process.get(), QIcon(":/icons/ekos_scheduler.png"), "");
+    toolsWidget->tabBar()->setTabToolTip(1, i18n("Scheduler2"));
     connect(schedulerProcess.get(), &Scheduler::newLog, this, &Ekos::Manager::updateLog);
     //connect(schedulerProcess.get(), SIGNAL(newTarget(QString)), mountTarget, SLOT(setText(QString)));
     connect(schedulerProcess.get(), &Ekos::Scheduler::newTarget, [&](const QString & target)

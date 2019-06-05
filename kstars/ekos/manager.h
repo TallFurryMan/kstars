@@ -28,6 +28,7 @@
 #include "indi/indistd.h"
 #include "mount/mount.h"
 #include "scheduler/scheduler.h"
+#include "scheduler/scheduler2.h"
 #include "auxiliary/filtermanager.h"
 #include "auxiliary/serialportassistant.h"
 #include "ksnotification.h"
@@ -437,6 +438,7 @@ class Manager : public QDialog, public Ui::Manager
         std::unique_ptr<Align> alignProcess;
         std::unique_ptr<Mount> mountProcess;
         std::unique_ptr<Scheduler> schedulerProcess;
+        std::unique_ptr<Scheduler2> scheduler2Process;
         std::unique_ptr<Dome> domeProcess;
         std::unique_ptr<Weather> weatherProcess;
         std::unique_ptr<DustCap> dustCapProcess;
