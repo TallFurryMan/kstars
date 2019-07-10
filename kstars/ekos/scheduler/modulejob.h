@@ -1,31 +1,39 @@
 #ifndef MODULEJOB_H
 #define MODULEJOB_H
 
+#include <QDateTime>
+#include <QStandardItem>
 #include <QString>
 #include <QVariant>
 
 
 
-class ModuleJob
+class ModuleJob: public QStandardItem
 {
 public:
-    explicit ModuleJob(const QList<QVariant> &data, ModuleJob * parent = 0);
-    virtual ~ModuleJob();
+    ModuleJob(QStandardItem *parent = nullptr);
+    virtual ~ModuleJob() {}
 public:
-    void appendChild(ModuleJob *);
-    int row() const;
+    enum CellFields {
+        CF_NAME = 0,
+        CF_DESC = 1,
+        CF_START = 2,
+        CF_ALT = 3,
+        CF_END = 4,
+        CF_DUR = 5,
+        CF_COUNT = 6
+    };
 public:
-    int childCount() const { return m_childItems.count(); }
-    int columnCount() const { return m_itemData.count(); }
-    QVariant data(int column) const { return m_itemData.value(column); }
-    ModuleJob * parentItem() { return m_parentItem; }
-    ModuleJob * child(int row) { return m_childItems.value(row); }
-public:
-    virtual QString getModuleName() const { return QString("-?-"); }
+    virtual QString getDisplayDescription() const { return QString("-"); }
 protected:
-    QList<ModuleJob*> m_childItems;
-    QList<QVariant> m_itemData;
-    ModuleJob *m_parentItem;
+    void setDisplayName(QString const &name);
+    void setDisplayDescription(QString const &);
+    void setStartTime(QDateTime const &);
+    void setAltitude(double const &);
+    void setEndTime(QDateTime const &);
+    void setDuration(double const &);
+protected:
+    void setCellField(enum CellFields, QString const &);
 };
 
 #endif // MODULEJOB_H

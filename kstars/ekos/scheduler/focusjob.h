@@ -10,7 +10,9 @@
 class FocusJob : public ModuleJob
 {
 public:
-    FocusJob(const QList<QVariant> &data, ModuleJob *parent);
+    FocusJob(ModuleJob *parent);
+public:
+    virtual QString getDisplayDescription() const override;
 };
 
 #endif // FOCUSJOB_H

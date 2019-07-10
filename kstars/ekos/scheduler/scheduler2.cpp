@@ -8,10 +8,11 @@ Scheduler2::Scheduler2()
 {
     setupUi(this);
 
-    QList<QVariant> list;
-    list << "One";
-    list << "Two";
-    queueTable->setModel(new SchedulerModel(list));
+    queueTable->setModel(new SchedulerModel());
+    queueTable->expandAll();
+    queueTable->resizeColumnToContents(0);
+    queueTable->resizeColumnToContents(1);
+    queueTable->resizeColumnToContents(2);
 }
 
 }

@@ -6,11 +6,12 @@
 #include <QString>
 #include <QVariant>
 
-class SchedulerModel: public QAbstractItemModel
+class SchedulerModel: public QStandardItemModel
 {
 public:
-    SchedulerModel(const QList<QVariant> &data, QObject *parent = nullptr);
-    ~SchedulerModel();
+    SchedulerModel(QObject *parent = nullptr);
+    virtual ~SchedulerModel();
+    /*
 public:
     QVariant data(const QModelIndex &index, int role) const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
@@ -21,9 +22,7 @@ public:
     QModelIndex parent(const QModelIndex &index) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-
-private:
-    void setupModelData(const QStringList &lines, ModuleJob *parent);
+*/
 private:
     ModuleJob *rootItem;
 };

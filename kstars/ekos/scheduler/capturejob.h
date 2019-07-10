@@ -10,7 +10,9 @@
 class CaptureJob : public ModuleJob
 {
 public:
-    CaptureJob(const QList<QVariant> &data, ModuleJob *parent);
+    CaptureJob(ModuleJob *parent);
+public:
+    virtual QString getDisplayDescription() const override;
 };
 
 #endif // CAPTUREJOB_H

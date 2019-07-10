@@ -3,23 +3,23 @@
 
 #include <QPushButton>
 
-SchedulerModel::SchedulerModel(const QList<QVariant> &data, QObject *parent)
-    : QAbstractItemModel(parent)
+SchedulerModel::SchedulerModel(QObject *parent)
+    : QStandardItemModel(parent)
 {
-    QList<QVariant> rootData;
-    rootData << "Job Title" << "Actions" << "Summary";
-    rootItem = new ModuleJob(rootData, nullptr);
+    QStringList l = {"Job", "Description", "Startup", "Altitude", "End", "Duration"};
+    setHorizontalHeaderLabels(l);
 
-    QList<QVariant> childData;
-    childData << "Observation: M101" << "<Toolbar>" << "M101 RA:2h23'34 DEC:46°34'23";
-    rootItem->appendChild(new Scheduler2Job(childData, rootItem));
+    QStandardItem *root = this->invisibleRootItem();
+    new Scheduler2Job(root, "M101");
+    new Scheduler2Job(root, "M42");
+    new Scheduler2Job(root, "NGC6888");
 }
 
 SchedulerModel::~SchedulerModel()
 {
     delete rootItem;
 }
-
+/*
 QModelIndex SchedulerModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
@@ -104,3 +104,4 @@ QVariant SchedulerModel::headerData(int section, Qt::Orientation orientation, in
 
     return QVariant();
 }
+*/

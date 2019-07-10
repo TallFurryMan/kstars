@@ -10,9 +10,9 @@
 class ObservatoryJob : public ModuleJob
 {
 public:
-    ObservatoryJob(const QList<QVariant> &data, ModuleJob *parent);
+    ObservatoryJob(ModuleJob *parent);
 public:
-    virtual QString getModuleName() const;
+    virtual QString getDisplayDescription() const override;
 };
 
 #endif // OBSERVATORYJOB_H

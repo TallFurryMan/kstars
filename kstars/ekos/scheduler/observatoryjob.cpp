@@ -1,8 +1,15 @@
 #include "observatoryjob.h"
 #include "modulejob.h"
 
-ObservatoryJob::ObservatoryJob(const QList<QVariant> &data, ModuleJob *parent)
-    : ModuleJob(data, parent)
+ObservatoryJob::ObservatoryJob(ModuleJob *parent)
+    : ModuleJob(parent)
 {
+    setIcon(QIcon::fromTheme("edit-find"));
+    setDisplayName("Observatory");
+    setDisplayDescription(getDisplayDescription());
+}
 
+QString ObservatoryJob::getDisplayDescription() const
+{
+    return QString("CCD 5°C");
 }

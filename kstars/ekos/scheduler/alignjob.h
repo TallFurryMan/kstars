@@ -8,7 +8,9 @@
 class AlignJob : public ModuleJob
 {
 public:
-    AlignJob(const QList<QVariant> &, ModuleJob *);
+    AlignJob(ModuleJob *parent);
+public:
+    virtual QString getDisplayDescription() const override;
 };
 
 #endif // ALIGNJOB_H

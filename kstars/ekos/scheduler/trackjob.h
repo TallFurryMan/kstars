@@ -2,15 +2,17 @@
 #define TRACKJOB_H
 
 #include "modulejob.h"
-#include <QString>
-#include <QVariant>
+#include "scheduler2job.h"
+#include <skypoint.h>
 
-
-
-class TrackJob : public ModuleJob
+class TrackJob: public ModuleJob
 {
 public:
-    TrackJob(const QList<QVariant> &data, ModuleJob *parent);
+    TrackJob(Scheduler2Job *parent, const SkyPoint &target);
+public:
+    virtual QString getDisplayDescription() const;
+protected:
+    SkyPoint m_target;
 };
 
 #endif // TRACKJOB_H
