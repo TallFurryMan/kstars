@@ -37,6 +37,7 @@
                 <Action name="filter10"/>
                 <Separator/>
                 <Action name="mark_stars"/>
+                <Action name="show_curvature"/>
 </Menu>
 
 <Menu name="help"><text>&amp;Help</text>

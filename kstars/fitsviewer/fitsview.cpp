@@ -814,6 +814,9 @@ void FITSView::drawOverlay(QPainter * painter, double scale)
 
     if (markStars)
         drawStarCentroid(painter, scale);
+
+    if (showCurvature)
+        drawCurvature(painter);
 }
 
 void FITSView::updateMode(FITSMode fmode)
@@ -1554,6 +1557,13 @@ void FITSView::toggleStars()
         updateFrame();
 }
 
+void FITSView::toggleCurvature()
+{
+    toggleCurvature(!showCurvature);
+    if (image_frame != nullptr)
+        updateFrame();
+}
+
 void FITSView::toggleStretch()
 {
     stretchImage = !stretchImage;
@@ -1678,10 +1688,19 @@ int FITSView::findStars(StarAlgorithm algorithm, const QRect &searchBox)
 {
     int count = 0;
 
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    emit newStatus(i18n("Finding stars..."), FITS_MESSAGE);
+    qApp->processEvents();
+
     if(trackingBoxEnabled)
         count = imageData->findStars(algorithm, trackingBox);
     else
         count = imageData->findStars(algorithm, searchBox);
+
+    if (count >= 0 && isVisible())
+        emit newStatus(i18np("1 star detected. HFR=%2", "%1 stars detected. HFR=%2", count,
+                             imageData->getHFR()), FITS_MESSAGE);
+    QApplication::restoreOverrideCursor();
 
     return count;
 }
@@ -1691,17 +1710,15 @@ void FITSView::toggleStars(bool enable)
     markStars = enable;
 
     if (markStars && !imageData->areStarsSearched())
-    {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-        emit newStatus(i18n("Finding stars..."), FITS_MESSAGE);
-        qApp->processEvents();
-        int count = findStars(ALGORITHM_SEP);
+        findStars(ALGORITHM_SEP);
+}
 
-        if (count >= 0 && isVisible())
-            emit newStatus(i18np("1 star detected. HFR=%2", "%1 stars detected. HFR=%2", count,
-                                 imageData->getHFR()), FITS_MESSAGE);
-        QApplication::restoreOverrideCursor();
-    }
+void FITSView::toggleCurvature(bool enable)
+{
+    showCurvature = enable;
+
+    if (showCurvature && !imageData->areStarsSearched())
+        findStars(ALGORITHM_SEP);
 }
 
 void FITSView::processPointSelection(int x, int y)
@@ -1944,6 +1961,11 @@ void FITSView::createFloatingToolBar()
         floatingToolBar->addAction(QIcon::fromTheme("kstars_stars"),
                                    i18n("Detect Stars in Image"), this, SLOT(toggleStars()));
     toggleStarsAction->setCheckable(true);
+
+    toggleCurvatureAction =
+        floatingToolBar->addAction(QIcon::fromTheme("kstars_curvature", QIcon(":/icons/kstars_curvature.png")),
+                                   i18n("Show Curvature in Image"), this, SLOT(toggleCurvature()));
+    toggleCurvatureAction->setCheckable(true);
 
 #ifdef HAVE_DATAVISUALIZATION
     toggleProfileAction =

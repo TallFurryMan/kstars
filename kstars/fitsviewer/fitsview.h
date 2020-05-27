@@ -169,6 +169,9 @@ class FITSView : public QScrollArea
         void setStarFilterRange(float const innerRadius, float const outerRadius);
         int filterStars();
 
+        // Curvature
+        void toggleCurvature(bool enable);
+
         // FITS Mode
         void updateMode(FITSMode fmode);
         FITSMode getMode()
@@ -243,6 +246,9 @@ class FITSView : public QScrollArea
         void toggleStarProfile();
         void viewStarProfile();
 
+        // Curvature
+        void toggleCurvature();
+
         void centerTelescope();
 
         void toggleStretch();
@@ -300,6 +306,7 @@ class FITSView : public QScrollArea
         void updateFrameLargeImage();
         void updateFrameSmallImage();
         bool drawHFR(QPainter * painter, const QString & hfr, int x, int y);
+        void drawCurvature(QPainter * painter);
 
 
         QLabel *noImageLabel { nullptr };
@@ -329,6 +336,7 @@ class FITSView : public QScrollArea
         bool showEQGrid { false };
         bool showPixelGrid { false };
         bool showStarsHFR { false };
+        bool showCurvature { false };
 
         // Should the image be displayed in linear (false) or stretched (true).
         // Initial value controlled by Options::autoStretch.
@@ -383,6 +391,7 @@ class FITSView : public QScrollArea
         QAction *toggleEQGridAction { nullptr };
         QAction *toggleObjectsAction { nullptr };
         QAction *toggleStarsAction { nullptr };
+        QAction *toggleCurvatureAction { nullptr };
         QAction *toggleProfileAction { nullptr };
         QAction *toggleStretchAction { nullptr };
   

@@ -229,6 +229,10 @@ FITSViewer::FITSViewer(QWidget *parent) : KXmlGuiWindow(parent)
     action->setText(i18n("Mark Stars"));
     connect(action, SIGNAL(triggered(bool)), SLOT(toggleStars()));
 
+    action = actionCollection()->addAction("show_curvature");
+    action->setText(i18n("Show Curvature"));
+    connect(action, SIGNAL(triggered(bool)), SLOT(toggleCurvature()));
+
     int filterCounter = 1;
 
     for (auto& filter : FITSViewer::filterTypes)
@@ -969,6 +973,26 @@ void FITSViewer::toggleStars()
     foreach (FITSTab *tab, fitsTabs)
     {
         tab->getView()->toggleStars(markStars);
+        tab->getView()->updateFrame();
+    }
+}
+
+void FITSViewer::toggleCurvature()
+{
+    if (showCurvature)
+    {
+        showCurvature = false;
+        actionCollection()->action("show_curvature")->setText(i18n("Show Curvature"));
+    }
+    else
+    {
+        showCurvature = true;
+        actionCollection()->action("show_curvature")->setText(i18n("Hide Curvature"));
+    }
+
+    foreach (FITSTab *tab, fitsTabs)
+    {
+        tab->getView()->toggleCurvature(showCurvature);
         tab->getView()->updateFrame();
     }
 }

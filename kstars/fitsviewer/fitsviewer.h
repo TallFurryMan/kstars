@@ -118,6 +118,7 @@ class FITSViewer : public KXmlGuiWindow
         void updateTabStatus(bool clean);
         void closeTab(int index);
         void toggleStars();
+        void toggleCurvature();
         void toggleCrossHair();
         void toggleEQGrid();
         void toggleObjects();
@@ -151,6 +152,7 @@ class FITSViewer : public KXmlGuiWindow
         QList<FITSTab *> fitsTabs;
         int fitsID { 0 };
         bool markStars { false };
+        bool showCurvature { false };
         QMap<int, FITSTab *> fitsMap;
         QUrl lastURL;
 
