@@ -953,9 +953,112 @@ void FITSView::drawStarCentroid(QPainter * painter, double scale)
                         break;
                 }
                 // Reset the font size.
-                painterFont.setPointSize(fontSize);
+                painterFont.setPointSizeF(fontSize);
                 painter->setFont(painterFont);
             }
+        }
+
+        //qreal const s = painter->font().pointSizeF();
+        //Q_ASSERT(s == fontSize);
+    }
+}
+
+void FITSView::drawCurvature(QPainter * painter)
+{
+    if (!imageData->areStarsSearched())
+        imageData->findStars(ALGORITHM_SEP);
+
+    size_t const width = 30;
+    unsigned int stars[width*width] = {0};
+    float thetas[width*width] = {0.0f}, eccs[width*width] = {0.0f};
+    float meanecc = 0.0f;
+
+    // Sum star center properties
+    for (auto const &starCenter : imageData->getStarCenters())
+    {
+        int const x = (width*starCenter->x)/imageData->width();
+        int const y = (width*starCenter->y)/imageData->height();
+        stars[x+y*width]++;
+        thetas[x+y*width] += starCenter->theta;
+        eccs[x+y*width] += starCenter->ecc;
+        meanecc += starCenter->ecc;
+    }
+
+    meanecc /= imageData->getStarCenters().count();
+
+    // Compute mean per star count
+    for (size_t x = 0; x < width; x++)
+    {
+        for (size_t y = 0; y < width; y++)
+        {
+            size_t const i = x+y*width;
+            thetas[i] = stars[i]? thetas[i]/stars[i] : 0.0f;
+            eccs[i] = stars[i]? eccs[i]/stars[i] : meanecc;
+        }
+    }
+
+    // This is a helper that
+    auto at = [&](float const * t, size_t x, size_t y, unsigned int &countme)
+    {
+        if ((0<x)&&(x<width-1)&&(0<y)&&(y<width-1))
+        {
+            countme++;
+            return t[x+y*width];
+        };
+        return 0.0f;
+    };
+
+    auto mean3x3 = [&](float const * t, size_t x, size_t y)
+    {
+        unsigned int count = 0;
+        return (at(t,x-1,y-1,count)+at(t,x+0,y-1,count)+at(t,x+1,y-1,count)+
+                at(t,x-1,y+0,count)+at(t,x+0,y+0,count)+at(t,x+1,y+0,count)+
+                at(t,x-1,y+1,count)+at(t,x+0,y+1,count)+at(t,x+1,y+1,count))/count;
+    };
+
+    // Mean with a 3x3 kernel
+    {
+        float srcthetas[width*width], srceccs[width*width];
+        memcpy(srcthetas,thetas,sizeof(thetas));
+        memcpy(srceccs,eccs,sizeof(eccs));
+        for (size_t x = 0; x < width; x++)
+        {
+            for (size_t y = 0; y < width; y++)
+            {
+                size_t const i = x+y*width;
+                thetas[i] = mean3x3(srcthetas,x,y);
+                eccs[i] = mean3x3(srceccs,x,y);
+            }
+        }
+    }
+
+    float const sqradius = (float) std::min(imageData->width(), imageData->height()) / width;
+    QColor const cgood(Qt::green), cbad(Qt::red);
+    int ramp[3] = {cgood.red()-cbad.red(), cgood.green()-cbad.green(), cgood.blue()-cbad.blue()};
+    for (size_t x = 0; x < width; x++)
+    {
+        for (size_t y = 0; y < width; y++)
+        {
+            size_t const i = x+y*width;
+
+            // We consider eccentricity quality is good at 0.3 and bad at 0.8
+            float const quality = (eccs[i] > 0.3f) ? (0.8f > eccs[i]) ? 1.0f - (eccs[i]-0.3f)/0.5f : 0.0f : 1.0f;
+            QColor const cquality(
+                        static_cast <int> (cbad.red()+ramp[0]*quality),
+                        static_cast <int> (cbad.green()+ramp[1]*quality),
+                        static_cast <int> (cbad.blue()+ramp[2]*quality), 150);
+            painter->setPen(QPen(cquality, scaleSize(2)));
+
+            float const cx = (((float)x+0.5f)*painter->device()->width())/width;
+            float const cy = (((float)y+0.5f)*painter->device()->height())/width;
+
+            float const theta = thetas[i];
+            float const radius = sqradius*(1.0f-quality)/2.0f;
+            float const dx = radius*cos(theta), dy = radius*sin(theta);
+
+            //painter->drawRect(cx-sqradius/2,cy-sqradius/2,sqradius,sqradius);
+            painter->drawLine(cx-dx,cy-dy,cx+dx,cy+dy);
+            //painter->drawText(cx,cy,QString::asprintf("%.2f",eccs[i]));
         }
     }
 }
