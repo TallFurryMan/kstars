@@ -39,6 +39,8 @@ public:
     float width {0};
     float HFR {-1};
     float sum {0};
+    float theta {0.0f};
+    float ecc {0.0f};
 };
 
 class BahtinovEdge : public Edge

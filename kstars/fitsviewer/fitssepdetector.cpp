@@ -166,6 +166,13 @@ int FITSSEPDetector::findSources(QList<Edge*> &starCenters, const QRect &boundar
         center->HFR = center->width = flux_fractions[0];
         if (flux_fractions[1] < maxRadius)
             center->width = flux_fractions[1] * 2;
+
+        center->theta = catalog->theta[i];
+
+        double const sq_great_axis = catalog->a[i] > catalog->b[i] ? catalog->a[i]*catalog->a[i] : catalog->b[i]*catalog->b[i];
+        double const sq_small_axis = catalog->a[i] > catalog->b[i] ? catalog->b[i]*catalog->b[i] : catalog->a[i]*catalog->a[i];
+        center->ecc = sqrt(1-(sq_small_axis/sq_great_axis));
+
         edges.append(center);
     }
 
