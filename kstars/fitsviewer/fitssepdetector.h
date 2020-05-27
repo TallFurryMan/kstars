@@ -44,6 +44,13 @@ public:
      */
     FITSStarDetector & configure(const QString &setting, const QVariant &value) override;
 
+public:
+    /** @group Detection parameters.
+     * @{ */
+    /** @brief Source count over which to stop detecting. */
+    int MAX_STARS { 100 };
+    /** @} */
+
 protected:
     /** @internal Consolidate a float data buffer from FITS data.
      * @param buffer is the destination float block.

@@ -25,6 +25,10 @@
 
 FITSStarDetector &FITSCentroidDetector::configure(const QString &setting, const QVariant &value)
 {
+    if (!setting.compare("MAX_STARS", Qt::CaseInsensitive))
+        if (value.canConvert <int> ())
+            MAX_STARS = value.value <int> ();
+
     if (!setting.compare("MINIMUM_STDVAR", Qt::CaseInsensitive))
         if (value.canConvert <int> ())
             MINIMUM_STDVAR = value.value <int> ();
@@ -433,6 +437,9 @@ int FITSCentroidDetector::findSources(QList<Edge*> &starCenters, const QRect &bo
 
             starCenters.append(rCenter);
         }
+
+        if (MAX_STARS <= starCenters.count())
+            break;
     }
 
     if (starCenters.count() > 1 && m_Mode != FITS_FOCUS)

@@ -45,6 +45,8 @@ public:
 protected:
     /** @group Detection parameters. Use the names as strings for FITSStarDetector::configure().
      * @{ */
+    /** @brief Source count over which to stop detecting. */
+    int MAX_STARS { 100 };
     /** @brief Initial variation, decreasing as search progresses. Configurable. */
     int MINIMUM_STDVAR { 5 };
     /** @brief Initial source width, decreasing as search progresses. Configurable. */

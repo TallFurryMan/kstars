@@ -23,8 +23,12 @@
 #include "fits_debug.h"
 #include "fitssepdetector.h"
 
-FITSStarDetector& FITSSEPDetector::configure(const QString &, const QVariant &)
+FITSStarDetector& FITSSEPDetector::configure(const QString &setting, const QVariant &value)
 {
+    if (!setting.compare("MAX_STARS", Qt::CaseInsensitive))
+        if (value.canConvert<int>())
+            MAX_STARS = value.value<int>();
+
     return *this;
 }
 
@@ -47,7 +51,7 @@ int FITSSEPDetector::findSources(QList<Edge*> &starCenters, const QRect &boundar
 
     int x = 0, y = 0, w = stats.width, h = stats.height, maxRadius = 50;
     std::vector<std::pair<int, double>> ovals;
-    constexpr int maxNumCenters = 100;
+    const int maxNumCenters = MAX_STARS;
 
     // We may skip 20% of the stars (those with the largest 20% HFRs) as those are suspect
     // to be non-stars) if we have plenty of detections.

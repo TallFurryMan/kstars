@@ -990,6 +990,7 @@ int FITSData::findStars(StarAlgorithm algorithm, const QRect &trackingBox)
     {
         case ALGORITHM_SEP:
             count = FITSSEPDetector(this)
+                    .configure("MAX_STARS", Options::maximumDetectedStars())
                     .findSources(starCenters, trackingBox);
             break;
 

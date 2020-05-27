@@ -1445,6 +1445,10 @@
       <label>Conserve CPU and memory by disabling all resource-intensive features in FITS Viewer</label>
       <default>KSUtils::isHardwareLimited()</default>
    </entry>
+   <entry name="MaximumDetectedStars" type="Int">
+      <label>Maximum number of stars the source detection will attempt to detect.</label>
+      <default>300</default>
+   </entry>
    </group>
    <group name="WISettings">
       <entry name="BortleClass" type="UInt">
